@@ -43,8 +43,6 @@ class MyDriver:
         self.logger.debug(f"Se ha inicializado el driver con el os {platform_os}")
 
 
-
-
     def login(self, username, password):
         self.logger.info("Comenzando el login...")
 
@@ -63,6 +61,26 @@ class MyDriver:
         self.logger.info("¡Éxito!")
 
         self.navigate_to_schedule()
+
+
+    def download_manga(self, manga_name, manga_url, first_chapter, last_chapter, temp_path=const.DEFAULT_TEMP_FOLDER):
+        return None
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     def navigate_to_schedule(self):
         self._navigate(const.SCHEDULE_URL)

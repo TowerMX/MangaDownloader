@@ -25,8 +25,9 @@ DEFAULT_CONFIG_FILE = os.path.join(CONFIG_FOLDER, "config.yaml")
 DEFAULT_CREDENTIALS_FILE = os.path.join(CONFIG_FOLDER, "credentials.yaml")
 DEFAULT_MANGALIST_FILE = os.path.join(CONFIG_FOLDER, "mangalist.yaml")
 
-DEFAULT_ACTION_SLEEP_TIME = 0.5  # seconds
-DEFAULT_BROWSE_SLEEP_TIME = 3  # seconds
+DEFAULT_TEMP_FOLDER = os.path.join(ROOT_PATH, "temp")
+DEFAULT_SAVE_FOLDER = os.path.join(ROOT_PATH, "mangas")
+
 
 # DRIVER CONSTANTS
 
@@ -39,18 +40,11 @@ LOGIN_PASSWORD_BOX_ID = "password"
 LOGIN_REMEMBER_ME_BOX_ID = "rememberMe"
 LOGIN_SUBMIT_BOX_ID = "kc-login"
 
+DEFAULT_ACTION_SLEEP_TIME = 0.5  # seconds
+DEFAULT_BROWSE_SLEEP_TIME = 3  # seconds
 
-SCHEDULE_URL = "athlete/reservas.aspx"
-SCHEDULE_WOD_BOX_CSS_ID = "button[data-id='1']"
-SCHEDULE_PIXELS_TO_SCROLL_UP = 100
-SCHEDULE_TIME_BETWEEN_DAYS = 864000000000
-SCHEDULE_OPEN_BOX_TEXT = "Open Box"
-SCHEDULE_BUTTON_TRAINING_TEXT = "Entrenar"
 
-WOD_POPUP_ID = "te1"
-WOD_CLOSE_POPUP_CLASS = "fancybox-item fancybox-close"
 
-WEEK_DAYS = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"]
 
 
 def recalculatePaths(root_path):

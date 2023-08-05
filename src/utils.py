@@ -56,3 +56,11 @@ def extract_rel_url_with_query(full_url):
 
     relative_path = f"{path}?{query}"
     return relative_path
+
+
+def convert_to_pdf(manga_name, temp_path=const.DEFAULT_TEMP_FOLDER, save_path=const.DEFAULT_SAVE_FOLDER):
+    return None
+
+
+def delete_images(manga_name, temp_path=const.DEFAULT_TEMP_FOLDER):
+    return None

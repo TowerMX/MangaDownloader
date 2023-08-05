@@ -35,12 +35,19 @@ La estructura es:
 ```
 - name: <nombre_manga_1>
   url: <url_manga_1>
+  first_chapter: <"first"|capítulo_inicial>
+  last_chapter: <"last"|capítulo_final>
 - name: <nombre_manga_2>
   url: <url_manga_2>
+  first_chapter: <"first"|capítulo_inicial>
+  last_chapter: <"last"|capítulo_final>
 - name: <nombre_manga_3>
   url: <url_manga_3>
+  first_chapter: <"first"|capítulo_inicial>
+  last_chapter: <"last"|capítulo_final>
 ...
 ```
 
 Se pueden añadir tantos mangas como se quiera, poniendo un guión (-) al principio de cada manga.
 El nombre elegido es el que se usará para crear la carpeta donde se descargará el manga, y la url es el enlace a la primera página del primer capítulo del manga.
+Para los capítulos inicial y final puede escribirse "first" y "last" respectivamente, o el número del capítulo que se quiera.
