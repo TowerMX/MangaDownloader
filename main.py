@@ -11,9 +11,9 @@ def run():
     config, credentials = myloader.load_config()
 
     browser = driver.MyDriver(logger, sandbox=True)
-    browser.login(credentials["username"], credentials["password"])
-    daily_wods = browser.get_all_wods()
-    failed_trains = browser.sign_up_for_training(config["schedule"])
+
+    if credentials is not None:
+        browser.login(credentials["username"], credentials["password"])
 
     browser.close()
 

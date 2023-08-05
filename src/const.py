@@ -21,19 +21,24 @@ LOG_FOLDER = os.path.join(ROOT_PATH, "log")
 DEFAULT_LOG_FILE = "main"
 
 CONFIG_FOLDER = os.path.join(ROOT_PATH, "config")
-DEFAULT_CREDENTIALS_FILE = os.path.join(CONFIG_FOLDER, "credentials.yaml")
 DEFAULT_CONFIG_FILE = os.path.join(CONFIG_FOLDER, "config.yaml")
+DEFAULT_CREDENTIALS_FILE = os.path.join(CONFIG_FOLDER, "credentials.yaml")
+DEFAULT_MANGALIST_FILE = os.path.join(CONFIG_FOLDER, "mangalist.yaml")
 
 DEFAULT_ACTION_SLEEP_TIME = 0.5  # seconds
 DEFAULT_BROWSE_SLEEP_TIME = 3  # seconds
 
 # DRIVER CONSTANTS
 
-LOGIN_URL = "user/"
+AVATAR_ID = "avatar"
+SIGN_IN_BUTTON_CLASS = "mb-2 rounded relative md-btn flex items-center px-3 overflow-hidden primary glow px-4 mb-2"
+SIGN_OUT_BUTTON_CLASS = "list__item hover:bg-accent block cursor-pointer rounded relative md-btn flex items-center px-3 overflow-hidden accent text px-4 list__item hover:bg-accent block cursor-pointer"
 
-LOGIN_USERNAME_BOX_ID = "body_body_body_body_IoEmail"
-LOGIN_PASSWORD_BOX_ID = "body_body_body_body_IoPassword"
-LOGIN_SUBMIT_BOX_ID = "body_body_body_body_CtlEntrar"
+LOGIN_USERNAME_BOX_ID = "username"
+LOGIN_PASSWORD_BOX_ID = "password"
+LOGIN_REMEMBER_ME_BOX_ID = "rememberMe"
+LOGIN_SUBMIT_BOX_ID = "kc-login"
+
 
 SCHEDULE_URL = "athlete/reservas.aspx"
 SCHEDULE_WOD_BOX_CSS_ID = "button[data-id='1']"

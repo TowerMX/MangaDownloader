@@ -9,11 +9,13 @@ import time
 
 class MyDriver:
 
-    base_url = "https://909.wodbuster.com/"
+    base_url = "https://mangadex.org/"
 
     def __init__(self, logger, sandbox=False):
         self.logger = logger
         self.sandbox = sandbox
+        if self.sandbox:
+            self.logger.debug("Modo sandbox activado")
         self.logger.debug("Inicializando el driver...")
         platform_os = platform.system()
 
@@ -39,6 +41,9 @@ class MyDriver:
 
         self.driver = webdriver.Chrome(driver_path, options=chrome_options)
         self.logger.debug(f"Se ha inicializado el driver con el os {platform_os}")
+
+
+
 
     def login(self, username, password):
         self.logger.info("Comenzando el login...")
@@ -201,6 +206,9 @@ class MyDriver:
                 )
 
         return missing_trains
+
+
+
 
     def _navigate(self, rel_url):
         self.driver.get(self.base_url + rel_url)
