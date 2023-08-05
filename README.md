@@ -1,2 +1,1 @@
-Para descargar manga de https://manga-templo.com/ :D
-O de https://mangadex.org/
+Para descargar manga de https://mangadex.org/ :D
