@@ -1,6 +1,8 @@
 import datetime
 import pytz
 from urllib.parse import urlparse
+from pathlib import Path
+import shutil
 from . import const
 
 
@@ -63,4 +65,4 @@ def convert_to_pdf(manga_name, temp_path=const.DEFAULT_TEMP_FOLDER, save_path=co
 
 
 def delete_images(manga_name, temp_path=const.DEFAULT_TEMP_FOLDER):
-    return None
+    shutil.rmtree(rf"{temp_path}\{manga_name}", ignore_errors=True)

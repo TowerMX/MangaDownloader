@@ -28,8 +28,13 @@ DEFAULT_MANGALIST_FILE = os.path.join(CONFIG_FOLDER, "mangalist.yaml")
 DEFAULT_TEMP_FOLDER = os.path.join(ROOT_PATH, "temp")
 DEFAULT_SAVE_FOLDER = os.path.join(ROOT_PATH, "mangas")
 
+VOLUME_FOLDER_STRING = "Volumen"
+CHAPTER_FOLDER_STRING = "Capítulo"
+
 
 # DRIVER CONSTANTS
+
+HOME_URL = "https://mangadex.org"
 
 AVATAR_ID = "avatar"
 SIGN_IN_BUTTON_CLASS = "mb-2 rounded relative md-btn flex items-center px-3 overflow-hidden primary glow px-4 mb-2"
@@ -40,8 +45,15 @@ LOGIN_PASSWORD_BOX_ID = "password"
 LOGIN_REMEMBER_ME_BOX_ID = "rememberMe"
 LOGIN_SUBMIT_BOX_ID = "kc-login"
 
-DEFAULT_ACTION_SLEEP_TIME = 0.5  # seconds
+MANGA_CHAPTER_CLASS = "reader--meta chapter"
+MANGA_PAGE_CLASS = "reader--meta page"
+MANGA_IMAGE_CLASS = "img sp limit-width limit-height mx-auto"
+
+DEFAULT_ACTION_SLEEP_TIME = 0.3  # seconds
 DEFAULT_BROWSE_SLEEP_TIME = 3  # seconds
+DEFAULT_LOGIN_SLEEP_TIME = 5  # seconds
+DEFAULT_PAGE_TURN_SLEEP_TIME = 0.5  # seconds
+DEFAULT_CHAPTER_CHANGE_EXTRA_SLEEP_TIME = 1  # seconds
 
 
 

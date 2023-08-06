@@ -22,11 +22,16 @@ class Loader:
         with open(mangalist_path, "r") as f3:
             mangalist = yaml.safe_load(f3)
 
+        if config["temp_path"] is not None:
+            temp_path = config["temp_path"]
+        if config["save_path"] is not None:
+            save_path = config["save_path"]
+
         # Se comprueba si existen credenciales. En caso de que no haya se deja vacío.
         if credentials["username"] is None or credentials["password"] is None:
             credentials = None
 
-        return config, credentials, mangalist
+        return config, credentials, mangalist, temp_path, save_path
 
     def set_credentials(self, username, password, credentials_path=const.DEFAULT_CREDENTIALS_FILE):
         yaml.SafeDumper.add_representer(

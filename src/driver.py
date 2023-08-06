@@ -1,10 +1,14 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver import ActionChains
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
-from . import const, utils
+from pathlib import Path
 import platform
 import time
+from . import const, utils
 
 
 class MyDriver:
@@ -15,7 +19,7 @@ class MyDriver:
         self.logger = logger
         self.sandbox = sandbox
         if self.sandbox:
-            self.logger.debug("Modo sandbox activado")
+            self.logger.debug("Modo sandbox activado.")
         self.logger.debug("Inicializando el driver...")
         platform_os = platform.system()
 
@@ -39,204 +43,144 @@ class MyDriver:
         else:  # platform_os == 'Windows'
             driver_path = const.WINDOWS_DRIVER_PATH
 
-        self.driver = webdriver.Chrome(driver_path, options=chrome_options)
-        self.logger.debug(f"Se ha inicializado el driver con el os {platform_os}")
+        service = Service(executable_path=driver_path)
+
+        self.driver = webdriver.Chrome(service=service, options=chrome_options)
+        self.logger.debug(f"Se ha inicializado el driver con el os {platform_os}.")
 
 
-    def login(self, username, password):
-        self.logger.info("Comenzando el login...")
+    def login(self, username, password, remember_me=False):
+        try:
+            # Abre el menú de usuario
+            avatar = self.driver.find_element(By.ID, const.AVATAR_ID)
+            self._click(avatar)
+            # Busca el botón de cerrar sesión
+            self.driver.find_element(By.CLASS_NAME, const.SIGN_OUT_BUTTON_CLASS)
+            # Si llega a este punto es que ya estaba iniciada la sesión
+            self.logger.info("La sesión ya estaba iniciada.")
+        except NoSuchElementException:
+            # En caso de que no se encuentre, hay que iniciar sesión
+            self.logger.info("Comenzando el login...")
+            signin_button = self.driver.find_element(By.CLASS_NAME, const.SIGN_IN_BUTTON_CLASS)
+            self._click(signin_button)
 
-        self._navigate(const.LOGIN_URL)
+            self.logger.debug("Encontrando objetos...")
+            username_box = self.driver.find_element(By.ID, const.LOGIN_USERNAME_BOX_ID)
+            password_box = self.driver.find_element(By.ID, const.LOGIN_PASSWORD_BOX_ID)
+            remember_me_box = self.driver.find_element(By.ID, const.LOGIN_REMEMBER_ME_BOX_ID)
+            submit_box = self.driver.find_element(By.ID, const.LOGIN_SUBMIT_BOX_ID)
 
-        self.logger.debug("Encontrando objetos...")
-        username_box = self.driver.find_element(By.ID, const.LOGIN_USERNAME_BOX_ID)
-        password_box = self.driver.find_element(By.ID, const.LOGIN_PASSWORD_BOX_ID)
-        submit_box = self.driver.find_element(By.ID, const.LOGIN_SUBMIT_BOX_ID)
+            self.logger.debug("Mandando teclas...")
+            self._send_keys(username, username_box)
+            self._send_keys(password, password_box)
+            if remember_me:
+                self._click(remember_me_box)
+            self._click(submit_box, sleep_time=const.DEFAULT_LOGIN_SLEEP_TIME)
 
-        self.logger.debug("Mandando teclas...")
-        self._send_keys(username, username_box)
-        self._send_keys(password, password_box)
-        self._click(submit_box)
-
-        self.logger.info("¡Éxito!")
-
-        self.navigate_to_schedule()
+            self.logger.info("Se ha iniciado sesión correctamente.")
 
 
     def download_manga(self, manga_name, manga_url, first_chapter, last_chapter, temp_path=const.DEFAULT_TEMP_FOLDER):
+        manga_path = Path(rf"{temp_path}\{manga_name}")
+        manga_path.mkdir(exist_ok=True)
+
+        # Volume loop
+        while True:
+
+            # Chapter loop
+            while True:
+
+                # Page loop
+                while True:
+
+                    url = self.driver.current_url
+                    url_check = url.split("/")[3]
+
+                    if url_check == "chapter":
+                        pass
+                    elif url_check == "title":
+                        self.logger.info("Se ha llegado al final del manga. Saliendo...")
+                        break
+                    else:
+                        self.logger.error("Error en la URL. Saliendo...")
+                        break
+
+                    self._download_page(manga_name, manga_path, temp_path)
+                    if self._is_last_page():
+                        break
+                    self._next_page()
+                if self._is_last_chapter():
+                    break
+                self._next_chapter()
+
+
+        chapter_element = self.driver.find_element(By.CLASS_NAME, const.MANGA_CHAPTER_CLASS)
+        page_element = self.driver.find_element(By.CLASS_NAME, const.MANGA_PAGE_CLASS)
+
+        if chapter_element.text == "Oneshot":
+            volume_folder = "Oneshot"
+            chapter_folder = "\b"
+        else:
+            chapter_split = chapter_element.text.split(", ")
+            volume = chapter_split[0].split(" ")[1]
+            chapter = chapter_split[1].split(" ")[1]
+            volume_folder = f"{const.VOLUME_FOLDER_STRING} {volume}"
+            chapter_folder = f"{const.CHAPTER_FOLDER_STRING} {chapter}"
+
+        page_split = page_element.text.split(" / ")
+        page = page_split[0].split(" ")[1]
+        last_page = page_split[1]
+
+
+        p = Path(rf"{temp_path}\{manga_name}\{volume_folder}\{chapter_folder}")
+        p.mkdir(exist_ok=True)
+
+
+        img = self.driver.find_element(By.CLASS_NAME, const.MANGA_IMAGE_CLASS)
+        self._download_image(img, image_number, path)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    def _download_image(self, image_element, image_number, path):
         return None
 
 
 
 
 
+    def navigate_to_home(self):
+        self._navigate(const.HOME_URL)
 
+    def _navigate(self, url, sleep_time=const.DEFAULT_BROWSE_SLEEP_TIME):
+        self.driver.get(url)
+        self._wait(sleep_time)
 
-
-
-
-
-
-
-
-
-
-
-    def navigate_to_schedule(self):
-        self._navigate(const.SCHEDULE_URL)
-
-    def get_all_wods(self):
-        self.logger.info("Extrayendo todos los wods...")
-        buttons = self.driver.find_elements_by_css_selector(
-            const.SCHEDULE_WOD_BOX_CSS_ID
-        )
-        n_buttons = len(buttons)
-        relative_path = utils.extract_rel_url_with_query(self.driver.current_url)
-        wods = []
-        for i in range(n_buttons):
-            button = self.driver.find_elements_by_css_selector(
-                const.SCHEDULE_WOD_BOX_CSS_ID
-            )[i]
-            # Make it visible
-            self._make_visible(button)
-            # Popup opens
-            self._click(button)
-            # Identify popup
-            popup = self.driver.find_element(By.ID, const.WOD_POPUP_ID)
-            # Extract info from text
-            info = self._parse_text(popup.text)
-            wods.append(info)
-            # Refresh
-            self._navigate(relative_path)
-
-        return list(set(wods))
-
-    def sign_up_for_training(self, training_schedule):
-        self.logger.info("Registrándose en los días deseados...")
-        current_day, current_time = utils.get_current_day_and_hour()
-        # No se entrena el domingo
-        try:
-            del training_schedule[const.WEEK_DAYS[-1]]
-        except KeyError:
-            pass
-        # days_index = [const.WEEK_DAYS.index(day) for day in training_schedule.keys()]
-        # Se averigua cuáles de los días faltan por entrenar
-        # (en caso de ser domingo se entrenan todos los días)
-        if current_day == const.WEEK_DAYS[-1]:
-            filtered_days = list(training_schedule.keys())
+    def _page_turn(self, direction="right", sleep_time=const.DEFAULT_PAGE_TURN_SLEEP_TIME):
+        actions = ActionChains(self.driver)
+        if direction == "right":
+            actions.send_keys(Keys.RIGHT)
+        elif direction == "left":
+            actions.send_keys(Keys.LEFT)
         else:
-            filtered_days = [
-                day
-                for day in training_schedule.keys()
-                if const.WEEK_DAYS.index(day) >= const.WEEK_DAYS.index(current_day)
-            ]
-        # En caso de que haya que entrenar hoy, verificar que la hora no se haya pasado:
-        if current_day in filtered_days:
-            # Si ya se ha pasado la hora:
-            # Time1 > Time2
-            if utils.compare_times(training_schedule[current_day], current_time):
-                filtered_days.remove(current_day)
-        self.logger.debug(f"Días a entrenar: {str(filtered_days)}")
-        # Averiguamos el día de hoy en la página web
-        if not const.SCHEDULE_URL in self.driver.current_url:
-            self._navigate(const.SCHEDULE_URL)
-        current_query_time = utils.extract_time_from_query(self.driver.current_url)
-        shift = 0
-        # En caso de que hoy sea domingo se atrasan todos los días y se salta el primero:
-        if current_day == const.WEEK_DAYS[-1]:
-            shift = 1
-        # Se almacenará qué días (con sus horas) no se han podido clickar por estar llenos:
-        missing_trains = {}
-        # Se itera para todos los días en los que se quieran entrenar:
-        for day in filtered_days:
-            self.logger.debug(f"Iterando para el día: {day}")
-            # Se calcula el indice relativo al dia de hoy
-            if shift == 0:
-                rel_index = const.WEEK_DAYS.index(day) - const.WEEK_DAYS.index(current_day)
-            else:  # shift == 1:
-                rel_index = const.WEEK_DAYS.index(day) + shift
-            # Se navega para el día calculado
-            self._navigate(
-                f"{const.SCHEDULE_URL}?t={current_query_time + rel_index*const.SCHEDULE_TIME_BETWEEN_DAYS}"
-            )
-            # Se parsea el día para poder encontrar la etiqueta asociada:
-            training_hour = training_schedule[day].split(":")[0]
-            training_minute = training_schedule[day].split(":")[1]
-            box_tag = f"h{training_hour}{training_minute}00"
+            raise ValueError(f"Direction {direction} not valid")
+        actions.perform()
+        self._wait(sleep_time)
 
-            training_element = self.driver.find_element(By.CSS_SELECTOR,
-                f'[data-magellan-destination="{box_tag}"]'
-            )
+    def _wait(self, sleep_time):
+        time.sleep(sleep_time)
 
-            # La casuistica ahora es:
-            #     1. Es hoy (hay WOD):
-            #         a. Hay hueco para entrenar
-            #         b. No hay hueco para entrenar
-            #     2. Es otro dia o es OpenBox:
-            #         a. Hay hueco para entrenar
-            #         b. No hay hueco para entrenar
-
-            # Escogemos los botones dentro del entrenamiento:
-            buttons = training_element.find_elements_by_css_selector("button")
-
-            # Identificamos si estamos antes Open Box:
-            training_text = training_element.find_element(By.CSS_SELECTOR,
-                '[class="entrenamiento"]'
-            ).text
-            open_box = False
-            if const.SCHEDULE_OPEN_BOX_TEXT in training_text:
-                open_box = True
-
-            # Identificamos si es hoy:
-            today = False
-            if day == current_day:
-                today = True
-
-            # Si es open box u otro día
-            if open_box or not today:
-                button = buttons[0]
-            else:  # Si es hoy y no es open box
-                button = buttons[1]
-            self.logger.debug(f"Es OpenBox: {open_box}\tes hoy: {today}")
-            # Identificamos si hay hueco para entrenar:
-            if not const.SCHEDULE_BUTTON_TRAINING_TEXT in button.text:
-                # No hay hueco para entrenar
-                missing_trains[day] = training_schedule[day]
-                self.logger.debug(
-                    f"No hay hueco para entrenar para el día {day} a la hora {training_schedule[day]}"
-                )
-            # Se comprueba que no estemos previamente registrados:
-            try:
-                # Busca el botón que avisa de que ya estás inscrito
-                training_element.find_element(By.CSS_SELECTOR,
-                    '[class="button  alert"]'
-                )
-                # Si llega a este punto es que ya estábamos inscritos
-                self.logger.debug(
-                    f"Ya se estaba inscrito en el entrenamiento del día {day} a la hora {training_schedule[day]}"
-                )
-            except NoSuchElementException:
-                # En caso de que no se encuentre se clica
-                if not self.sandbox:
-                    self._click(button)
-                self.logger.debug(
-                    f"Se ha clicado el entrenamiento del día {day} a la hora {training_schedule[day]}"
-                )
-
-        return missing_trains
-
-
-
-
-    def _navigate(self, rel_url):
-        self.driver.get(self.base_url + rel_url)
-        self._wait_browse_gap()
-
-    def _wait_action_gap(self):
-        time.sleep(const.DEFAULT_ACTION_SLEEP_TIME)
-
-    def _wait_browse_gap(self):
-        time.sleep(const.DEFAULT_BROWSE_SLEEP_TIME)
 
     def _make_visible(self, element):
         self.driver.execute_script("arguments[0].scrollIntoView();", element)
@@ -248,14 +192,13 @@ class MyDriver:
         # EXAMPLE = "Wod\nWeightlifting\nSquat snatch\nE2MO2M 10’\n1 x 2 80%\n2 x 2 85%\n2 x 2 90%\nE3MO3M 12’\n1 x 1 95%\n1 x 1 100%\n2 x RM\nSquat snatch\nMax (n) rep(s)\n1RM 2RM 3RM 4RM 5RM 6RM 7RM 8RM 9RM 10RM 11RM 12RM 13RM 14RM 15RM 16RM 17RM 18RM 19RM 20RM\n39,06 Kg 36,45 Kg 35 Kg 34,01 Kg 33,26 Kg 32,66 Kg 32,16 Kg 31,73 Kg 31,36 Kg 31,03 Kg 30,74 Kg 30,47 Kg 30,23 Kg 30,00 Kg 29,80 Kg 29,61 Kg 29,43 Kg 29,26 Kg 29,10 Kg 28,95 Kg\n100% 95% 90% 85% 80% 75% 70% 65% 60% 55% 50% 45% 40% 35% 30% 25% 20% 15% 10% 5%\n39,06 Kg 37,11 Kg 35,15 Kg 33,20 Kg 31,25 Kg 29,30 Kg 27,34 Kg 25,39 Kg 23,44 Kg 21,48 Kg 19,53 Kg 17,58 Kg 15,62 Kg 13,67 Kg 11,72 Kg 9,76 Kg 7,81 Kg 5,86 Kg 3,91 Kg 1,95 Kg\nConditioning\nAMRAP 10’\n4 c2b\n6 db snatch 25/17’5\n24 du"
         return text
 
-    def _send_keys(self, text, element):
+    def _send_keys(self, text, element, sleep_time=const.DEFAULT_ACTION_SLEEP_TIME):
         element.send_keys(text)
-        self._wait_action_gap()
+        self._wait(sleep_time)
 
-    def _click(self, element):
-        # Use execute_script() to click the button
-        self.driver.execute_script("arguments[0].click();", element)
-        self._wait_action_gap()
+    def _click(self, element, sleep_time=const.DEFAULT_ACTION_SLEEP_TIME):
+        element.click()
+        self._wait(sleep_time)
 
     def close(self):
         self.driver.quit()

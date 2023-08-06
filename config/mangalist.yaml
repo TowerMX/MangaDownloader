@@ -1,6 +1,4 @@
 - name:
   url:
-- name:
-  url:
-- name:
-  url:
+  first_chapter: "first"
+  last_chapter: "last"

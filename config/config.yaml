@@ -1,3 +1,4 @@
 login: false
+remember_me: false
 temp_path:
 save_path:

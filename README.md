@@ -13,9 +13,14 @@ La estructura es:
 
 ```
 login: <true|false>
+remember_me: <true|false>
+temp_path: <ruta_descargas>
+save_path: <ruta_mangas>
 ```
 
-Por ahora, sólo se puede elegir si iniciar sesión o no. Por defecto es false.
+Se puede elegir si iniciar sesión o no, y si se quiere que se recuerde la sesión. Por defecto son false.
+
+También se puede elegir la ruta donde se descargan las imágenes temporalmente y la ruta donde se guardarán los mangas. Si se dejan vacías se usarán las rutas por defecto.
 
 ## config/credentials.yaml
 
@@ -50,4 +55,5 @@ La estructura es:
 
 Se pueden añadir tantos mangas como se quiera, poniendo un guión (-) al principio de cada manga.
 El nombre elegido es el que se usará para crear la carpeta donde se descargará el manga, y la url es el enlace a la primera página del primer capítulo del manga.
+
 Para los capítulos inicial y final puede escribirse "first" y "last" respectivamente, o el número del capítulo que se quiera.
