@@ -21,7 +21,9 @@ def run():
 
     '''
     for manga in mangalist:
-        browser.download_manga(manga["name"], manga["url"], manga["first_chapter"], manga["last_chapter"], temp_path)
+        downloaded_correctly = browser.download_manga(manga["name"], manga["url"], manga["first_chapter"], manga["last_chapter"], temp_path)
+        if not downloaded_correctly:
+            continue
         utils.convert_to_pdf(manga["name"], temp_path, save_path)
         utils.delete_images(manga["name"], temp_path)
     '''
