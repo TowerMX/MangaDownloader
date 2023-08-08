@@ -1,4 +1,8 @@
-- name: "5 seconds before the witch falls in love"
-  url: "https://mangadex.org/chapter/61112a0b-af61-4de9-b2a8-d6c0ccc16257"
+- name:
+  url:
+  first_chapter: "first"
+  last_chapter: "last"
+- name:
+  url:
   first_chapter: "first"
   last_chapter: "last"

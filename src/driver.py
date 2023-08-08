@@ -50,6 +50,7 @@ class MyDriver:
 
 
     def login(self, username, password, remember_me=False):
+        initial_url = self.driver.current_url
         # Abre el menú de usuario
         avatar = self.driver.find_element(By.ID, const.AVATAR_ID)
         self._click(avatar)
@@ -76,7 +77,12 @@ class MyDriver:
                 self._send_keys(password, password_box)
                 if remember_me:
                     self._click(remember_me_box)
-                self._click(submit_box, sleep_time=const.DEFAULT_LOGIN_SLEEP_TIME)
+                self._click(submit_box)
+
+                current_url = self.driver.current_url
+                while current_url != initial_url:
+                    self._wait(const.DEFAULT_LOGIN_SLEEP_TIME)
+                    current_url = self.driver.current_url
                 self.logger.info("Se ha iniciado sesión correctamente.")
             except Exception:
                 self.logger.error("No se ha podido iniciar sesión.")
@@ -115,11 +121,16 @@ class MyDriver:
         if volume == "Oneshot":
             pass
         elif isinstance(first_chapter, int) or isinstance(first_chapter, float):
+            previous_chapter = current_chapter + 1
             while not current_chapter == first_chapter:
+                if current_chapter == previous_chapter:
+                    self.logger.warning(f"Se ha introducido un número de primer capítulo ({first_chapter}) inferior al primero disponible ({current_chapter}). Se ha descargado a partir de dicho capítulo.")
+                    break
                 if current_chapter < first_chapter:
                     self._change_chapter(direction="forward")
                 else:
                     self._change_chapter(direction="backward")
+                previous_chapter = current_chapter
                 status_updated = False
                 while not status_updated:
                     try:
@@ -167,6 +178,7 @@ class MyDriver:
             return False
 
         #last_image_uri = ""
+
         # Volume/Chapter/Page loop
         while last_chapter == "last" or current_chapter <= last_chapter:
             current_url = self.driver.current_url
@@ -187,18 +199,21 @@ class MyDriver:
                 self.logger.error("Error en la URL durante la descarga. Descarga del manga incompleta.")
                 return False
 
+            '''
             page_downloaded = False
             while not page_downloaded:
                 try:
-                    image_element = self.driver.find_element(By.XPATH, const.MANGA_IMAGE_XPATH)
                     #current_image_uri = image_element.get_attribute("src")
                     #if current_image_uri == last_image_uri:
                     #    raise ValueError
-                    is_last_page, current_chapter = self._download_image(image_element, manga_name, temp_folder)
+                    is_last_page, current_chapter = self._download_image(manga_name, temp_folder)
                     #last_image_uri = current_image_uri
                     page_downloaded = True
                 except (NoSuchElementException, ValueError):
                     self._wait(const.DEFAULT_RETRY_SLEEP_TIME)
+            '''
+
+            is_last_page, current_chapter = self._download_image(manga_name, temp_folder)
 
             if is_last_page:
                 self._turn_page(direction="forward", sleep_time=const.DEFAULT_CHAPTER_CHANGE_SLEEP_TIME)
@@ -210,17 +225,18 @@ class MyDriver:
         return True
 
 
-    def _download_image(self, image_element, manga_name, temp_folder=const.DEFAULT_TEMP_FOLDER):
+    def _download_image(self, manga_name, temp_folder=const.DEFAULT_TEMP_FOLDER):
         status_updated = False
         while not status_updated:
             try:
                 volume, chapter, page, last_page = self._get_page_status()
                 if volume == "Oneshot":
-                    self.logger.info(f"Vol. {volume}, Ch. {chapter}, Pages: {page} / {last_page}")
-                else:
                     self.logger.info(f"Oneshot, Pages: {page} / {last_page}")
+                else:
+                    self.logger.info(f"Vol. {volume}, Ch. {chapter}, Pages: {page} / {last_page}")
+                image_element = self.driver.find_element(By.XPATH, const.MANGA_IMAGE_XPATH)
                 status_updated = True
-            except (ValueError, IndexError, Exception):
+            except (NoSuchElementException, ValueError, IndexError, Exception):
                 self._wait(const.DEFAULT_RETRY_SLEEP_TIME)
 
         if volume == "Oneshot":

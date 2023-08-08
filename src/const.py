@@ -62,11 +62,11 @@ MANGA_IMAGE_CLASS = "img sp limit-width limit-height mx-auto"
 MANGA_IMAGE_XPATH = "/html/body/div[1]/div[1]/div[2]/div[2]/div/div[1]/div[2]/div[1]/div/img[1]"
 MANGA_IMAGE_CSS_SELECTOR = "img.img:nth-child(1)"
 
-DEFAULT_ACTION_SLEEP_TIME = 0.3  # seconds
-DEFAULT_BROWSE_SLEEP_TIME = 1  # seconds
-DEFAULT_LOGIN_SLEEP_TIME = 10  # seconds
-DEFAULT_PAGE_TURN_SLEEP_TIME = 0.2  # seconds
-DEFAULT_CHAPTER_CHANGE_SLEEP_TIME = 0.5  # seconds
+DEFAULT_ACTION_SLEEP_TIME = 0.1  # seconds
+DEFAULT_BROWSE_SLEEP_TIME = 0.3  # seconds
+DEFAULT_LOGIN_SLEEP_TIME = 0.5  # seconds
+DEFAULT_PAGE_TURN_SLEEP_TIME = 0.1  # seconds
+DEFAULT_CHAPTER_CHANGE_SLEEP_TIME = 0.3  # seconds
 DEFAULT_RETRY_SLEEP_TIME = 0.1  # seconds
 
 
