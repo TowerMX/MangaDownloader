@@ -28,8 +28,8 @@ DEFAULT_MANGALIST_FILE = os.path.join(CONFIG_FOLDER, "mangalist.yaml")
 DEFAULT_TEMP_FOLDER = os.path.join(ROOT_PATH, "temp")
 DEFAULT_SAVE_FOLDER = os.path.join(ROOT_PATH, "mangas")
 
-VOLUME_FOLDER_STRING = "Volumen"
-CHAPTER_FOLDER_STRING = "Capítulo"
+VOLUME_FOLDER_PREFIX = "Volumen"
+CHAPTER_FOLDER_PREFIX = "Capítulo"
 
 
 # DRIVER CONSTANTS
@@ -63,11 +63,11 @@ MANGA_IMAGE_XPATH = "/html/body/div[1]/div[1]/div[2]/div[2]/div/div[1]/div[2]/di
 MANGA_IMAGE_CSS_SELECTOR = "img.img:nth-child(1)"
 
 DEFAULT_ACTION_SLEEP_TIME = 0.3  # seconds
-DEFAULT_BROWSE_SLEEP_TIME = 3  # seconds
-DEFAULT_LOGIN_SLEEP_TIME = 5  # seconds
-DEFAULT_PAGE_TURN_SLEEP_TIME = 0.5  # seconds
-DEFAULT_CHAPTER_CHANGE_SLEEP_TIME = 1  # seconds
-DEFAULT_RETRY_SLEEP_TIME = 0.2  # seconds
+DEFAULT_BROWSE_SLEEP_TIME = 1  # seconds
+DEFAULT_LOGIN_SLEEP_TIME = 10  # seconds
+DEFAULT_PAGE_TURN_SLEEP_TIME = 0.1  # seconds
+DEFAULT_CHAPTER_CHANGE_SLEEP_TIME = 0.3  # seconds
+DEFAULT_RETRY_SLEEP_TIME = 0.1  # seconds
 
 
 def recalculatePaths(root_path):

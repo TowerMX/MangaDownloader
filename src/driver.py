@@ -8,9 +8,7 @@ from selenium.webdriver.common.by import By
 from pathlib import Path
 import platform
 import time
-from PIL import Image
 import base64
-import io
 from . import const
 
 
@@ -111,7 +109,7 @@ class MyDriver:
             try:
                 volume, current_chapter = self._get_page_status()[0], float(self._get_page_status()[1])
                 status_updated = True
-            except (ValueError, IndexError):
+            except (ValueError, IndexError, Exception):
                 self._wait(const.DEFAULT_RETRY_SLEEP_TIME)
 
         if volume == "Oneshot":
@@ -127,7 +125,7 @@ class MyDriver:
                     try:
                         current_chapter = float(self._get_page_status()[1])
                         status_updated = True
-                    except (ValueError, IndexError):
+                    except (ValueError, IndexError, Exception):
                         self._wait(const.DEFAULT_RETRY_SLEEP_TIME)
         elif first_chapter == "first":
             previous_chapter = current_chapter + 1
@@ -139,7 +137,7 @@ class MyDriver:
                     try:
                         current_chapter = float(self._get_page_status()[1])
                         status_updated = True
-                    except (ValueError, IndexError):
+                    except (ValueError, IndexError, Exception):
                         self._wait(const.DEFAULT_RETRY_SLEEP_TIME)
         else:
             self.logger.error("Parámetro first_chapter de mangalist.yaml no reconocido.")
@@ -150,7 +148,7 @@ class MyDriver:
             try:
                 initial_page = int(self._get_page_status()[2])
                 status_updated = True
-            except (ValueError, IndexError):
+            except (ValueError, IndexError, Exception):
                 self._wait(const.DEFAULT_RETRY_SLEEP_TIME)
         while initial_page > 1:
             self._turn_page(direction="backward")
@@ -159,7 +157,7 @@ class MyDriver:
                 try:
                     initial_page = int(self._get_page_status()[2])
                     status_updated = True
-                except (ValueError, IndexError):
+                except (ValueError, IndexError, Exception):
                     self._wait(const.DEFAULT_RETRY_SLEEP_TIME)
 
         is_last_page = False
@@ -217,15 +215,15 @@ class MyDriver:
                 else:
                     self.logger.info(f"Oneshot, Pages: {page} / {last_page}")
                 status_updated = True
-            except (ValueError, IndexError):
+            except (ValueError, IndexError, Exception):
                 self._wait(const.DEFAULT_RETRY_SLEEP_TIME)
 
         if volume == "Oneshot":
             volume_folder = "Oneshot"
             chapter_folder = ""
         else:
-            volume_folder = f"{const.VOLUME_FOLDER_STRING} {volume}"
-            chapter_folder = f"{const.CHAPTER_FOLDER_STRING} {chapter}"
+            volume_folder = f"{const.VOLUME_FOLDER_PREFIX} {volume}"
+            chapter_folder = f"{const.CHAPTER_FOLDER_PREFIX} {chapter}"
 
         image_extension = image_element.get_attribute("alt").split(".")[-1]
         # image_extension = "png"
@@ -246,18 +244,9 @@ class MyDriver:
                 image_downloaded = True
             except Exception:
                 pass
-        image = Image.open(io.BytesIO(base64.decodebytes(image_bytes)))
-        image.save(image_path)
-        '''
-        with open(image_path, "wb") as img:
-            img.write(base64.decodebytes(image_bytes))
-        '''
 
-        '''
-        # Assuming base64_str is the string value without 'data:image/jpeg;base64,'
-        img = Image.open(io.BytesIO(base64.decodebytes(bytes(image_bytes, "utf-8"))))
-        img.save("my-image.jpeg")
-        '''
+        with open(image_path, "wb") as img:
+            img.write(image_bytes)
 
         is_last_page = page == last_page
         return is_last_page, float(chapter)
@@ -266,7 +255,7 @@ class MyDriver:
     def _get_page_status(self):
         chapter_element = self.driver.find_element(By.XPATH, const.MANGA_CHAPTER_XPATH)
         page_element = self.driver.find_element(By.XPATH, const.MANGA_PAGE_XPATH)
-
+        
         if chapter_element.text == "Oneshot":
             volume = "Oneshot"
             chapter = "1"

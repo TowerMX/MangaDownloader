@@ -2,12 +2,14 @@ import datetime
 import pytz
 from urllib.parse import urlparse
 from pathlib import Path
+from PIL import Image
 import shutil
+import os
 from . import const
 
 
 def convert_to_pdf(manga_name, temp_folder=const.DEFAULT_TEMP_FOLDER, save_folder=const.DEFAULT_SAVE_FOLDER):
-    return None
+    pass
 
 
 def delete_images(manga_name, temp_folder=const.DEFAULT_TEMP_FOLDER):
