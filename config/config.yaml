@@ -1,4 +1,5 @@
 login: false
 remember_me: false
+delete_images: false
 temp_path:
 save_path:

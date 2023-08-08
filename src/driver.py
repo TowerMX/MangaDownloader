@@ -8,7 +8,10 @@ from selenium.webdriver.common.by import By
 from pathlib import Path
 import platform
 import time
-from . import const, utils
+from PIL import Image
+import base64
+import io
+from . import const
 
 
 class MyDriver:
@@ -84,12 +87,13 @@ class MyDriver:
             self.logger.info("La sesión ya estaba iniciada.")
 
 
-    def download_manga(self, manga_name, manga_url, first_chapter, last_chapter, temp_folder=const.DEFAULT_TEMP_FOLDER):
-        self.logger.info(f"Comenzando descarga de {manga_name}...")
+    def download_manga(self, manga_name, manga_url, first_chapter="first", last_chapter="last", temp_folder=const.DEFAULT_TEMP_FOLDER):
+        self.logger.info(f"Comenzando descarga de imágenes de {manga_name}...")
         manga_path = Path(rf"{temp_folder}\{manga_name}")
         manga_path.mkdir(exist_ok=True)
 
-        url_check = manga_url.split("/")[3]
+        manga_url_split = manga_url.split("/")
+        url_check = manga_url_split[3] if len(manga_url_split) >= 4 else None
 
         if url_check == "chapter":
             self._navigate(manga_url)
@@ -97,26 +101,93 @@ class MyDriver:
             self.logger.warning("Esta es la URL de un manga, pero se debe introducir la URL de una página una vez dentro. El manga no se descargará.")
             return False
         else:
-            self.logger.error("Error en la URL.")
+            self.logger.error("Error en la URL, el manga no se descargará.")
             return False
 
-        current_chapter = int(self._get_page_status()[1])
-        while not current_chapter == first_chapter:
-            if current_chapter < first_chapter:
-                self._change_chapter(direction="forward")
-            else:
-                self._change_chapter(direction="backward")
-            current_chapter = int(self._get_page_status()[1])
+        volume = None
+        current_chapter = None
+        status_updated = False
+        while not status_updated:
+            try:
+                volume, current_chapter = self._get_page_status()[0], float(self._get_page_status()[1])
+                status_updated = True
+            except (ValueError, IndexError):
+                self._wait(const.DEFAULT_RETRY_SLEEP_TIME)
 
-        initial_page = int(self._get_page_status()[2])
+        if volume == "Oneshot":
+            pass
+        elif isinstance(first_chapter, int) or isinstance(first_chapter, float):
+            while not current_chapter == first_chapter:
+                if current_chapter < first_chapter:
+                    self._change_chapter(direction="forward")
+                else:
+                    self._change_chapter(direction="backward")
+                status_updated = False
+                while not status_updated:
+                    try:
+                        current_chapter = float(self._get_page_status()[1])
+                        status_updated = True
+                    except (ValueError, IndexError):
+                        self._wait(const.DEFAULT_RETRY_SLEEP_TIME)
+        elif first_chapter == "first":
+            previous_chapter = current_chapter + 1
+            while not current_chapter == previous_chapter:
+                self._change_chapter(direction="backward")
+                previous_chapter = current_chapter
+                status_updated = False
+                while not status_updated:
+                    try:
+                        current_chapter = float(self._get_page_status()[1])
+                        status_updated = True
+                    except (ValueError, IndexError):
+                        self._wait(const.DEFAULT_RETRY_SLEEP_TIME)
+        else:
+            self.logger.error("Parámetro first_chapter de mangalist.yaml no reconocido.")
+            return False
+
+        status_updated = False
+        while not status_updated:
+            try:
+                initial_page = int(self._get_page_status()[2])
+                status_updated = True
+            except (ValueError, IndexError):
+                self._wait(const.DEFAULT_RETRY_SLEEP_TIME)
         while initial_page > 1:
             self._turn_page(direction="backward")
-            initial_page = int(self._get_page_status()[2])
+            status_updated = False
+            while not status_updated:
+                try:
+                    initial_page = int(self._get_page_status()[2])
+                    status_updated = True
+                except (ValueError, IndexError):
+                    self._wait(const.DEFAULT_RETRY_SLEEP_TIME)
 
         is_last_page = False
 
+        if not (isinstance(last_chapter, int) or isinstance(last_chapter, float) or last_chapter == "last"):
+            self.logger.error("Parámetro last_chapter de mangalist.yaml no reconocido.")
+            return False
+
         # Volume/Chapter/Page loop
-        while current_chapter <= last_chapter:
+        while last_chapter == "last" or current_chapter <= last_chapter:
+            current_url = self.driver.current_url
+            url_check = current_url.split("/")[3]
+
+            if url_check == "chapter":
+                pass
+            elif url_check == "title":
+                if last_chapter != "last":
+                    current_chapter_split = str(round(current_chapter,3)).split(".")
+                    if len(current_chapter_split) == 2 and current_chapter_split[1] == "0":
+                        parsed_current_chapter = current_chapter_split[0]
+                    else:
+                        parsed_current_chapter = str(round(current_chapter,3))
+                    self.logger.warning(f"Se ha introducido un número de último capítulo ({last_chapter}) superior al último disponible ({parsed_current_chapter}). Se ha descargado hasta dicho capítulo.")
+                break
+            else:
+                self.logger.error("Error en la URL durante la descarga. Descarga del manga incompleta.")
+                return False
+
             page_downloaded = False
             while not page_downloaded:
                 try:
@@ -128,7 +199,7 @@ class MyDriver:
 
             if is_last_page:
                 self._turn_page(direction="forward", sleep_time=const.DEFAULT_CHAPTER_CHANGE_SLEEP_TIME)
-                current_chapter += 1
+                current_chapter += 0.0001
             else:
                 self._turn_page(direction="forward")
 
@@ -137,24 +208,59 @@ class MyDriver:
 
 
     def _download_image(self, image_element, manga_name, temp_folder=const.DEFAULT_TEMP_FOLDER):
-        volume, chapter, page, last_page = self._get_page_status()
+        status_updated = False
+        while not status_updated:
+            try:
+                volume, chapter, page, last_page = self._get_page_status()
+                if volume == "Oneshot":
+                    self.logger.info(f"Vol. {volume}, Ch. {chapter}, Pages: {page} / {last_page}")
+                else:
+                    self.logger.info(f"Oneshot, Pages: {page} / {last_page}")
+                status_updated = True
+            except (ValueError, IndexError):
+                self._wait(const.DEFAULT_RETRY_SLEEP_TIME)
 
         if volume == "Oneshot":
             volume_folder = "Oneshot"
-            chapter_folder = "\b"
+            chapter_folder = ""
         else:
             volume_folder = f"{const.VOLUME_FOLDER_STRING} {volume}"
             chapter_folder = f"{const.CHAPTER_FOLDER_STRING} {chapter}"
 
+        image_extension = image_element.get_attribute("alt").split(".")[-1]
+        # image_extension = "png"
         volume_path = Path(rf"{temp_folder}\{manga_name}\{volume_folder}")
         volume_path.mkdir(exist_ok=True)
-        chapter_path = Path(rf"{temp_folder}\{manga_name}\{volume_folder}\{chapter_folder}")
-        chapter_path.mkdir(exist_ok=True)
 
-        image_element.screenshot(rf"{temp_folder}\{manga_name}\{volume_folder}\{chapter_folder}\{page}.png")
+        if volume == "Oneshot":
+            image_path = rf"{temp_folder}\{manga_name}\{volume_folder}\{page}.{image_extension}"
+        else:
+            chapter_path = Path(rf"{temp_folder}\{manga_name}\{volume_folder}\{chapter_folder}")
+            chapter_path.mkdir(exist_ok=True)
+            image_path = rf"{temp_folder}\{manga_name}\{volume_folder}\{chapter_folder}\{page}.{image_extension}"
+
+        image_downloaded = False
+        while not image_downloaded:
+            try:
+                image_bytes = self.get_file_content_chrome(image_element.get_attribute("src"))
+                image_downloaded = True
+            except Exception:
+                pass
+        image = Image.open(io.BytesIO(base64.decodebytes(image_bytes)))
+        image.save(image_path)
+        '''
+        with open(image_path, "wb") as img:
+            img.write(base64.decodebytes(image_bytes))
+        '''
+
+        '''
+        # Assuming base64_str is the string value without 'data:image/jpeg;base64,'
+        img = Image.open(io.BytesIO(base64.decodebytes(bytes(image_bytes, "utf-8"))))
+        img.save("my-image.jpeg")
+        '''
 
         is_last_page = page == last_page
-        return is_last_page, int(chapter)
+        return is_last_page, float(chapter)
 
 
     def _get_page_status(self):
@@ -163,7 +269,7 @@ class MyDriver:
 
         if chapter_element.text == "Oneshot":
             volume = "Oneshot"
-            chapter = ""
+            chapter = "1"
         else:
             chapter_split = chapter_element.text.split(", ")
             volume = chapter_split[0].split(" ")[1]
@@ -174,6 +280,26 @@ class MyDriver:
         last_page = page_split[1]
 
         return volume, chapter, page, last_page
+
+
+    def get_file_content_chrome(self, uri):
+        result = self.driver.execute_async_script(
+            """
+        var uri = arguments[0];
+        var callback = arguments[1];
+        var toBase64 = function(buffer){for(var r,n=new Uint8Array(buffer),t=n.length,a=new Uint8Array(4*Math.ceil(t/3)),i=new Uint8Array(64),o=0,c=0;64>c;++c)i[c]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".charCodeAt(c);for(c=0;t-t%3>c;c+=3,o+=4)r=n[c]<<16|n[c+1]<<8|n[c+2],a[o]=i[r>>18],a[o+1]=i[r>>12&63],a[o+2]=i[r>>6&63],a[o+3]=i[63&r];return t%3===1?(r=n[t-1],a[o]=i[r>>2],a[o+1]=i[r<<4&63],a[o+2]=61,a[o+3]=61):t%3===2&&(r=(n[t-2]<<8)+n[t-1],a[o]=i[r>>10],a[o+1]=i[r>>4&63],a[o+2]=i[r<<2&63],a[o+3]=61),new TextDecoder("ascii").decode(a)};
+        var xhr = new XMLHttpRequest();
+        xhr.responseType = 'arraybuffer';
+        xhr.onload = function(){ callback(toBase64(xhr.response)) };
+        xhr.onerror = function(){ callback(xhr.status) };
+        xhr.open('GET', uri);
+        xhr.send();
+        """,
+            uri,
+        )
+        if type(result) == int:
+            raise Exception("Request failed with status %s" % result)
+        return base64.b64decode(result)
 
 
     def navigate_to_home(self):

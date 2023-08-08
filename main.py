@@ -8,7 +8,7 @@ def run():
 
     const.recalculatePaths(os.getcwd())
     myloader = loader.Loader()
-    config, credentials, mangalist, temp_path, save_path = myloader.load_config()
+    config, credentials, mangalist, temp_folder, save_folder = myloader.load_config()
 
     browser = driver.MyDriver(logger, sandbox=False)
     browser.navigate_to_home()
@@ -19,14 +19,16 @@ def run():
         else:
             logger.warning("No se han encontrado credenciales. No se iniciará sesión.")
 
-    '''
     for manga in mangalist:
-        downloaded_correctly = browser.download_manga(manga["name"], manga["url"], manga["first_chapter"], manga["last_chapter"], temp_path)
+        downloaded_correctly = browser.download_manga(manga["name"], manga["url"], manga["first_chapter"], manga["last_chapter"], temp_folder=temp_folder)
         if not downloaded_correctly:
             continue
-        utils.convert_to_pdf(manga["name"], temp_path, save_path)
-        utils.delete_images(manga["name"], temp_path)
-    '''
+        logger.info("Convirtiendo a PDF...")
+        utils.convert_to_pdf(manga["name"], temp_folder=temp_folder, save_folder=save_folder)
+        logger.info("Convertido a PDF correctamente.")
+        if config["delete_images"] is True:
+            utils.delete_images(manga["name"], temp_folder=temp_folder)
+            logger.info("Las imágenes descargadas han sido borradas.")
 
     logger.info("Cerrando navegador.")
     browser.close()

@@ -11,8 +11,8 @@ class Loader:
             config_path=const.DEFAULT_CONFIG_FILE,
             credentials_path=const.DEFAULT_CREDENTIALS_FILE,
             mangalist_path=const.DEFAULT_MANGALIST_FILE,
-            temp_path=const.DEFAULT_TEMP_FOLDER,
-            save_path=const.DEFAULT_SAVE_FOLDER,
+            temp_folder=const.DEFAULT_TEMP_FOLDER,
+            save_folder=const.DEFAULT_SAVE_FOLDER,
     ):
         # Se carga la información
         with open(config_path, "r") as f1:
@@ -31,7 +31,7 @@ class Loader:
         if credentials["username"] is None or credentials["password"] is None:
             credentials = None
 
-        return config, credentials, mangalist, temp_path, save_path
+        return config, credentials, mangalist, temp_folder, save_folder
 
     def set_credentials(self, username, password, credentials_path=const.DEFAULT_CREDENTIALS_FILE):
         yaml.SafeDumper.add_representer(

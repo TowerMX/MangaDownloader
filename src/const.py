@@ -67,6 +67,7 @@ DEFAULT_BROWSE_SLEEP_TIME = 3  # seconds
 DEFAULT_LOGIN_SLEEP_TIME = 5  # seconds
 DEFAULT_PAGE_TURN_SLEEP_TIME = 0.5  # seconds
 DEFAULT_CHAPTER_CHANGE_SLEEP_TIME = 1  # seconds
+DEFAULT_RETRY_SLEEP_TIME = 0.2  # seconds
 
 
 def recalculatePaths(root_path):

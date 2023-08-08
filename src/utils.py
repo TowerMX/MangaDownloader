@@ -6,6 +6,14 @@ import shutil
 from . import const
 
 
+def convert_to_pdf(manga_name, temp_folder=const.DEFAULT_TEMP_FOLDER, save_folder=const.DEFAULT_SAVE_FOLDER):
+    return None
+
+
+def delete_images(manga_name, temp_folder=const.DEFAULT_TEMP_FOLDER):
+    shutil.rmtree(rf"{temp_folder}\{manga_name}", ignore_errors=True)
+
+
 def compare_times(time1, time2):
     # Time1 > Time2
     aux1 = time1.split(":")
@@ -58,11 +66,3 @@ def extract_rel_url_with_query(full_url):
 
     relative_path = f"{path}?{query}"
     return relative_path
-
-
-def convert_to_pdf(manga_name, temp_path=const.DEFAULT_TEMP_FOLDER, save_path=const.DEFAULT_SAVE_FOLDER):
-    return None
-
-
-def delete_images(manga_name, temp_path=const.DEFAULT_TEMP_FOLDER):
-    shutil.rmtree(rf"{temp_path}\{manga_name}", ignore_errors=True)
