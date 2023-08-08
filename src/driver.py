@@ -87,8 +87,8 @@ class MyDriver:
 
     def download_manga(self, manga_name, manga_url, first_chapter="first", last_chapter="last", temp_folder=const.DEFAULT_TEMP_FOLDER):
         self.logger.info(f"Comenzando descarga de imágenes de {manga_name}...")
-        manga_path = Path(rf"{temp_folder}\{manga_name}")
-        manga_path.mkdir(exist_ok=True)
+        # Crea carpeta del manga
+        Path(rf"{temp_folder}\{manga_name}").mkdir(exist_ok=True)
 
         manga_url_split = manga_url.split("/")
         url_check = manga_url_split[3] if len(manga_url_split) >= 4 else None
@@ -166,6 +166,7 @@ class MyDriver:
             self.logger.error("Parámetro last_chapter de mangalist.yaml no reconocido.")
             return False
 
+        #last_image_uri = ""
         # Volume/Chapter/Page loop
         while last_chapter == "last" or current_chapter <= last_chapter:
             current_url = self.driver.current_url
@@ -190,10 +191,14 @@ class MyDriver:
             while not page_downloaded:
                 try:
                     image_element = self.driver.find_element(By.XPATH, const.MANGA_IMAGE_XPATH)
+                    #current_image_uri = image_element.get_attribute("src")
+                    #if current_image_uri == last_image_uri:
+                    #    raise ValueError
                     is_last_page, current_chapter = self._download_image(image_element, manga_name, temp_folder)
+                    #last_image_uri = current_image_uri
                     page_downloaded = True
-                except NoSuchElementException:
-                    pass
+                except (NoSuchElementException, ValueError):
+                    self._wait(const.DEFAULT_RETRY_SLEEP_TIME)
 
             if is_last_page:
                 self._turn_page(direction="forward", sleep_time=const.DEFAULT_CHAPTER_CHANGE_SLEEP_TIME)
@@ -226,15 +231,15 @@ class MyDriver:
             chapter_folder = f"{const.CHAPTER_FOLDER_PREFIX} {chapter}"
 
         image_extension = image_element.get_attribute("alt").split(".")[-1]
-        # image_extension = "png"
-        volume_path = Path(rf"{temp_folder}\{manga_name}\{volume_folder}")
-        volume_path.mkdir(exist_ok=True)
+
+        # Crea carpeta del volumen
+        Path(rf"{temp_folder}\{manga_name}\{volume_folder}").mkdir(exist_ok=True)
 
         if volume == "Oneshot":
             image_path = rf"{temp_folder}\{manga_name}\{volume_folder}\{page}.{image_extension}"
         else:
-            chapter_path = Path(rf"{temp_folder}\{manga_name}\{volume_folder}\{chapter_folder}")
-            chapter_path.mkdir(exist_ok=True)
+            # Crea carpeta del capítulo
+            Path(rf"{temp_folder}\{manga_name}\{volume_folder}\{chapter_folder}").mkdir(exist_ok=True)
             image_path = rf"{temp_folder}\{manga_name}\{volume_folder}\{chapter_folder}\{page}.{image_extension}"
 
         image_downloaded = False

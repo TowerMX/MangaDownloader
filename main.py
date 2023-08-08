@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from src import const, log, driver, loader, utils
 
 
@@ -9,6 +10,17 @@ def run():
     const.recalculatePaths(os.getcwd())
     myloader = loader.Loader()
     config, credentials, mangalist, temp_folder, save_folder = myloader.load_config()
+
+    try:
+        Path(temp_folder).mkdir(exist_ok=True)
+    except FileNotFoundError:
+        logger.error("La ubicación de la carpeta de descarga no es válida o no existe el directorio que la contiene.")
+        return
+    try:
+        Path(save_folder).mkdir(exist_ok=True)
+    except FileNotFoundError:
+        logger.error("La ubicación de la carpeta de guardado no es válida o no existe el directorio que la contiene.")
+        return
 
     browser = driver.MyDriver(logger, sandbox=False)
     browser.navigate_to_home()
@@ -36,7 +48,7 @@ def run():
 
         # Borrado de imágenes si se solicita
         if config["delete_images"] is True:
-            utils.delete_images(manga["name"], temp_folder=temp_folder)
+            utils.delete_files(manga["name"], temp_folder)
             logger.info("Las imágenes descargadas han sido borradas.")
 
     logger.info("Cerrando navegador.")
