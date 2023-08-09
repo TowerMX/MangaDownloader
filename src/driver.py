@@ -75,7 +75,7 @@ class MyDriver:
                 self.logger.debug("Mandando teclas...")
                 self._send_keys(username, username_box)
                 self._send_keys(password, password_box)
-                if remember_me:
+                if remember_me is True:
                     self._click(remember_me_box)
                 self._click(submit_box)
 
@@ -94,7 +94,11 @@ class MyDriver:
     def download_manga(self, manga_name, manga_url, first_chapter="first", last_chapter="last", temp_folder=const.DEFAULT_TEMP_FOLDER):
         self.logger.info(f"Comenzando descarga de imágenes de {manga_name}...")
         # Crea carpeta del manga
-        Path(rf"{temp_folder}\{manga_name}").mkdir(exist_ok=True)
+        try:
+            Path(rf"{temp_folder}\{manga_name}").mkdir(exist_ok=True)
+        except NotADirectoryError:
+            self.logger.error(f"El nombre {manga_name} no es válido.")
+            return False
 
         manga_url_split = manga_url.split("/")
         url_check = manga_url_split[3] if len(manga_url_split) >= 4 else None
@@ -171,14 +175,11 @@ class MyDriver:
                 except (ValueError, IndexError, Exception):
                     self._wait(const.DEFAULT_RETRY_SLEEP_TIME)
 
-        is_last_page = False
-
         if not (isinstance(last_chapter, int) or isinstance(last_chapter, float) or last_chapter == "last"):
             self.logger.error("Parámetro last_chapter de mangalist.yaml no reconocido.")
             return False
 
         # Volume/Chapter/Page loop
-        last_image_uri = ""
         while last_chapter == "last" or current_chapter <= last_chapter:
             current_url = self.driver.current_url
             url_check = current_url.split("/")[3]
@@ -198,7 +199,7 @@ class MyDriver:
                 self.logger.error("Error en la URL durante la descarga. Descarga del manga incompleta.")
                 return False
 
-            current_chapter, is_last_page, last_image_uri = self._download_image(manga_name, last_image_uri=last_image_uri, temp_folder=temp_folder)
+            current_chapter, is_last_page = self._download_image(manga_name, temp_folder=temp_folder)
 
             if is_last_page:
                 self._turn_page(direction="forward", sleep_time=const.DEFAULT_CHAPTER_CHANGE_SLEEP_TIME)
@@ -210,30 +211,32 @@ class MyDriver:
         return True
 
 
-    def _download_image(self, manga_name, last_image_uri="", temp_folder=const.DEFAULT_TEMP_FOLDER):
+    def _download_image(self, manga_name, temp_folder=const.DEFAULT_TEMP_FOLDER):
         status_updated = False
         while not status_updated:
             try:
                 volume, chapter, page, last_page = self._get_page_status()
                 image_element = self.driver.find_element(By.XPATH, const.MANGA_IMAGE_XPATH)
-                if image_element.get_attribute("src") == last_image_uri:
-                    self.driver.refresh()
-                    raise NoSuchElementException
                 status_updated = True
             except (NoSuchElementException, ValueError, IndexError, Exception):
                 self._wait(const.DEFAULT_RETRY_SLEEP_TIME)
 
         if volume == "Oneshot":
             self.logger.info(f"Oneshot, Pages: {page} / {last_page}")
+        elif volume == "No volumes":
+            self.logger.info(f"Ch. {chapter}, Pages: {page} / {last_page}")
         else:
             self.logger.info(f"Vol. {volume}, Ch. {chapter}, Pages: {page} / {last_page}")
 
         if volume == "Oneshot":
             volume_folder = "Oneshot"
             chapter_folder = ""
+        elif volume == "No volumes":
+            volume_folder = "No volumes"
+            chapter_folder = f"{const.CHAPTER_PREFIX} {chapter}"
         else:
-            volume_folder = f"{const.VOLUME_FOLDER_PREFIX} {volume}"
-            chapter_folder = f"{const.CHAPTER_FOLDER_PREFIX} {chapter}"
+            volume_folder = f"{const.VOLUME_PREFIX} {volume}"
+            chapter_folder = f"{const.CHAPTER_PREFIX} {chapter}"
 
         image_extension = image_element.get_attribute("alt").split(".")[-1]
 
@@ -258,7 +261,7 @@ class MyDriver:
         with open(image_path, "wb") as img:
             img.write(image_bytes)
 
-        return float(chapter), page==last_page, image_element.get_attribute("src")
+        return float(chapter), page==last_page
 
 
     def _get_page_status(self):
@@ -270,8 +273,12 @@ class MyDriver:
             chapter = "1"
         else:
             chapter_split = chapter_element.text.split(", ")
-            volume = chapter_split[0].split(" ")[1]
-            chapter = chapter_split[1].split(" ")[1]
+            if len(chapter_split) == 1:
+                volume = "No volumes"
+                chapter = chapter_split[0].split(" ")[1]
+            else:
+                volume = chapter_split[0].split(" ")[1]
+                chapter = chapter_split[1].split(" ")[1]
 
         page_split = page_element.text.split(" / ")
         page = page_split[0].split(" ")[1]

@@ -17,18 +17,22 @@ def convert_to_pdf(manga_name, temp_folder=const.DEFAULT_TEMP_FOLDER, save_folde
             if not volume.is_dir():
                 continue
             if volume.name == "Oneshot":
-                images_folder = rf"{temp_folder}\{manga_name}\Oneshot"
-                pdf_path = rf"{save_folder}\{manga_name}\Oneshot.pdf"
+                images_folder = rf"{temp_folder}\{manga_name}\{volume.name}"
+                pdf_path = rf"{save_folder}\{manga_name}\{volume.name}.pdf"
                 _images_to_pdf(images_folder, pdf_path)
-                break
-            else:
-                # Crea carpeta del volumen
-                Path(rf"{save_folder}\{manga_name}\{volume.name}").mkdir(exist_ok=True)
+            elif volume.name == "No volumes":
                 for chapter in os.scandir(rf"{temp_folder}\{manga_name}\{volume.name}"):
                     if not chapter.is_dir():
                         continue
                     images_folder = rf"{temp_folder}\{manga_name}\{volume.name}\{chapter.name}"
-                    pdf_path = rf"{save_folder}\{manga_name}\{volume.name}\{chapter.name}.pdf"
+                    pdf_path = rf"{save_folder}\{manga_name}\{chapter.name}.pdf"
+                    _images_to_pdf(images_folder, pdf_path)
+            else:
+                for chapter in os.scandir(rf"{temp_folder}\{manga_name}\{volume.name}"):
+                    if not chapter.is_dir():
+                        continue
+                    images_folder = rf"{temp_folder}\{manga_name}\{volume.name}\{chapter.name}"
+                    pdf_path = rf"{save_folder}\{manga_name}\{volume.name}, {chapter.name}.pdf"
                     _images_to_pdf(images_folder, pdf_path)
         return True
     except Exception:

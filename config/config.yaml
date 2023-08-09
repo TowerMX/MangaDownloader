@@ -1,5 +1,5 @@
+language: "es"
 login: false
-remember_me: false
-delete_images: false
+delete_images: true
 temp_path:
 save_path:

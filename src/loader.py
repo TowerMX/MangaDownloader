@@ -1,10 +1,10 @@
 import yaml
-from . import const, utils, log
+from . import const, log
 
 
 class Loader:
-    def __init__(self):
-        self.logger = log.configureLogger(__name__)
+    def __init__(self, logger=log.configureLogger(__name__)):
+        self.logger = logger
 
     def load_config(
             self,
@@ -22,10 +22,16 @@ class Loader:
         with open(mangalist_path, "r") as f3:
             mangalist = yaml.safe_load(f3)
 
-        if config["temp_path"] is not None:
-            temp_path = config["temp_path"]
-        if config["save_path"] is not None:
-            save_path = config["save_path"]
+        try:
+            if config["temp_path"] is not None:
+                temp_folder = config["temp_path"]
+        except KeyError:
+            pass
+        try:
+            if config["save_path"] is not None:
+                save_folder = config["save_path"]
+        except KeyError:
+            pass
 
         # Se comprueba si existen credenciales. En caso de que no haya se deja vacío.
         if credentials["username"] is None or credentials["password"] is None:

@@ -28,8 +28,8 @@ DEFAULT_MANGALIST_FILE = os.path.join(CONFIG_FOLDER, "mangalist.yaml")
 DEFAULT_TEMP_FOLDER = os.path.join(ROOT_PATH, "temp")
 DEFAULT_SAVE_FOLDER = os.path.join(ROOT_PATH, "mangas")
 
-VOLUME_FOLDER_PREFIX = "Volumen"
-CHAPTER_FOLDER_PREFIX = "Capítulo"
+VOLUME_PREFIX = "Volumen"
+CHAPTER_PREFIX = "Capítulo"
 
 
 # DRIVER CONSTANTS
@@ -59,7 +59,7 @@ MANGA_PAGE_CLASS = "reader--meta page"
 MANGA_PAGE_XPATH = "/html/body/div[1]/div[1]/div[2]/div[2]/div/div[1]/div[1]/div[2]/div[2]"
 MANGA_PAGE_CSS_SELECTOR = "div.reader--meta:nth-child(2)"
 MANGA_IMAGE_CLASS = "img sp limit-width limit-height mx-auto"
-MANGA_IMAGE_XPATH = "/html/body/div[1]/div[1]/div[2]/div[2]/div/div[1]/div[2]/div[1]/div/img[1]"
+MANGA_IMAGE_XPATH = "/html/body/div[1]/div[1]/div[2]/div[2]/div/div[1]/div[2]/div[1]/div/img[not (@style=\"display: none;\")]"
 MANGA_IMAGE_CSS_SELECTOR = "img.img:nth-child(1)"
 
 DEFAULT_ACTION_SLEEP_TIME = 0.1  # seconds
@@ -84,3 +84,29 @@ def recalculatePaths(root_path):
     WINDOWS_DRIVER_PATH = os.path.join(WINDOWS_FOLDER_PATH, WINDOWS_DRIVER)
 
     LOG_FOLDER = os.path.join(ROOT_PATH, "log")
+
+
+def set_language(language="es", logger=None):
+    global VOLUME_PREFIX, CHAPTER_PREFIX
+
+    if language == "es":
+        VOLUME_PREFIX = "Volumen"
+        CHAPTER_PREFIX = "Capítulo"
+    if language == "pt":
+        VOLUME_PREFIX = "Volume"
+        CHAPTER_PREFIX = "Capítulo"
+    elif language == "en":
+        VOLUME_PREFIX = "Volume"
+        CHAPTER_PREFIX = "Chapter"
+    elif language == "de":
+        VOLUME_PREFIX = "Buchband"
+        CHAPTER_PREFIX = "Kapitel"
+    elif language == "it":
+        VOLUME_PREFIX = "Volume"
+        CHAPTER_PREFIX = "Capitolo"
+    elif language == "fr":
+        VOLUME_PREFIX = "Volume"
+        CHAPTER_PREFIX = "Chapitre"
+    else:
+        if logger is not None:
+            logger.error("Idioma no reconocido, los idiomas soportados están en el README")

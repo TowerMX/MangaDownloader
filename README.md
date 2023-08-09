@@ -12,15 +12,28 @@ Los ficheros de configuración involucrados son:
 La estructura es:
 
 ```
+language: <idioma>
 login: <true|false>
-remember_me: <true|false>
+delete_images: <true|false>
 temp_path: <ruta_descargas>
 save_path: <ruta_mangas>
 ```
 
-Se puede elegir si iniciar sesión o no, y si se quiere que se recuerde la sesión. Por defecto son false.
+Puede elegirse el idioma para los archivos de entre los siguientes:
+- Español: "es"
+- Portugués: "pt"
+- Inglés: "en"
+- Alemán: "de"
+- Italiano: "it"
+- Francés: "fr"
 
-También se puede elegir la ruta donde se descargan las imágenes temporalmente y la ruta donde se guardarán los mangas. Si se dejan vacías se usarán las rutas por defecto.
+Por defecto está en español.
+
+Se puede elegir si iniciar sesión o no, por defecto es false.
+
+Después de la ejecución, las imágenes temporales pueden borrarse. Por defecto es true.
+
+También se puede elegir la ruta donde se descargan las imágenes temporalmente y la ruta donde se guardarán los mangas. Si se dejan vacías se usarán las rutas por defecto, que son las carpetas temp y mangas en el directorio raíz del programa.
 
 ## config/credentials.yaml
 
