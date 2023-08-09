@@ -177,9 +177,8 @@ class MyDriver:
             self.logger.error("Parámetro last_chapter de mangalist.yaml no reconocido.")
             return False
 
-        #last_image_uri = ""
-
         # Volume/Chapter/Page loop
+        last_image_uri = ""
         while last_chapter == "last" or current_chapter <= last_chapter:
             current_url = self.driver.current_url
             url_check = current_url.split("/")[3]
@@ -199,21 +198,7 @@ class MyDriver:
                 self.logger.error("Error en la URL durante la descarga. Descarga del manga incompleta.")
                 return False
 
-            '''
-            page_downloaded = False
-            while not page_downloaded:
-                try:
-                    #current_image_uri = image_element.get_attribute("src")
-                    #if current_image_uri == last_image_uri:
-                    #    raise ValueError
-                    is_last_page, current_chapter = self._download_image(manga_name, temp_folder)
-                    #last_image_uri = current_image_uri
-                    page_downloaded = True
-                except (NoSuchElementException, ValueError):
-                    self._wait(const.DEFAULT_RETRY_SLEEP_TIME)
-            '''
-
-            is_last_page, current_chapter = self._download_image(manga_name, temp_folder)
+            current_chapter, is_last_page, last_image_uri = self._download_image(manga_name, last_image_uri=last_image_uri, temp_folder=temp_folder)
 
             if is_last_page:
                 self._turn_page(direction="forward", sleep_time=const.DEFAULT_CHAPTER_CHANGE_SLEEP_TIME)
@@ -225,19 +210,23 @@ class MyDriver:
         return True
 
 
-    def _download_image(self, manga_name, temp_folder=const.DEFAULT_TEMP_FOLDER):
+    def _download_image(self, manga_name, last_image_uri="", temp_folder=const.DEFAULT_TEMP_FOLDER):
         status_updated = False
         while not status_updated:
             try:
                 volume, chapter, page, last_page = self._get_page_status()
-                if volume == "Oneshot":
-                    self.logger.info(f"Oneshot, Pages: {page} / {last_page}")
-                else:
-                    self.logger.info(f"Vol. {volume}, Ch. {chapter}, Pages: {page} / {last_page}")
                 image_element = self.driver.find_element(By.XPATH, const.MANGA_IMAGE_XPATH)
+                if image_element.get_attribute("src") == last_image_uri:
+                    self.driver.refresh()
+                    raise NoSuchElementException
                 status_updated = True
             except (NoSuchElementException, ValueError, IndexError, Exception):
                 self._wait(const.DEFAULT_RETRY_SLEEP_TIME)
+
+        if volume == "Oneshot":
+            self.logger.info(f"Oneshot, Pages: {page} / {last_page}")
+        else:
+            self.logger.info(f"Vol. {volume}, Ch. {chapter}, Pages: {page} / {last_page}")
 
         if volume == "Oneshot":
             volume_folder = "Oneshot"
@@ -269,8 +258,7 @@ class MyDriver:
         with open(image_path, "wb") as img:
             img.write(image_bytes)
 
-        is_last_page = page == last_page
-        return is_last_page, float(chapter)
+        return float(chapter), page==last_page, image_element.get_attribute("src")
 
 
     def _get_page_status(self):
@@ -322,43 +310,30 @@ class MyDriver:
 
 
     def _turn_page(self, direction="forward", sleep_time=const.DEFAULT_PAGE_TURN_SLEEP_TIME):
-        actions = ActionChains(self.driver)
         if direction == "forward":
-            actions.send_keys(Keys.RIGHT)
+            self._press_key(Keys.RIGHT, sleep_time=sleep_time)
         elif direction == "backward":
-            actions.send_keys(Keys.LEFT)
+            self._press_key(Keys.LEFT, sleep_time=sleep_time)
         else:
             raise ValueError(f"Direction {direction} not valid")
-        actions.perform()
-        self._wait(sleep_time)
 
 
     def _change_chapter(self, direction="forward", sleep_time=const.DEFAULT_CHAPTER_CHANGE_SLEEP_TIME):
-        actions = ActionChains(self.driver)
         if direction == "forward":
-            actions.send_keys(".")
+            self._press_key(".", sleep_time=sleep_time)
         elif direction == "backward":
-            actions.send_keys(",")
+            self._press_key(",", sleep_time=sleep_time)
         else:
             raise ValueError(f"Direction {direction} not valid")
-        actions.perform()
-        self._wait(sleep_time)
 
 
     def _wait(self, sleep_time):
         time.sleep(sleep_time)
 
 
-    def _make_visible(self, element):
-        self.driver.execute_script("arguments[0].scrollIntoView();", element)
-        self.driver.execute_script(
-            f"window.scrollBy(0, -{const.SCHEDULE_PIXELS_TO_SCROLL_UP});"
-        )
-
-
-    def _parse_text(self, text):
-        # EXAMPLE = "Wod\nWeightlifting\nSquat snatch\nE2MO2M 10’\n1 x 2 80%\n2 x 2 85%\n2 x 2 90%\nE3MO3M 12’\n1 x 1 95%\n1 x 1 100%\n2 x RM\nSquat snatch\nMax (n) rep(s)\n1RM 2RM 3RM 4RM 5RM 6RM 7RM 8RM 9RM 10RM 11RM 12RM 13RM 14RM 15RM 16RM 17RM 18RM 19RM 20RM\n39,06 Kg 36,45 Kg 35 Kg 34,01 Kg 33,26 Kg 32,66 Kg 32,16 Kg 31,73 Kg 31,36 Kg 31,03 Kg 30,74 Kg 30,47 Kg 30,23 Kg 30,00 Kg 29,80 Kg 29,61 Kg 29,43 Kg 29,26 Kg 29,10 Kg 28,95 Kg\n100% 95% 90% 85% 80% 75% 70% 65% 60% 55% 50% 45% 40% 35% 30% 25% 20% 15% 10% 5%\n39,06 Kg 37,11 Kg 35,15 Kg 33,20 Kg 31,25 Kg 29,30 Kg 27,34 Kg 25,39 Kg 23,44 Kg 21,48 Kg 19,53 Kg 17,58 Kg 15,62 Kg 13,67 Kg 11,72 Kg 9,76 Kg 7,81 Kg 5,86 Kg 3,91 Kg 1,95 Kg\nConditioning\nAMRAP 10’\n4 c2b\n6 db snatch 25/17’5\n24 du"
-        return text
+    def _press_key(self, key, sleep_time=const.DEFAULT_ACTION_SLEEP_TIME):
+        ActionChains(self.driver).send_keys(key).perform()
+        self._wait(sleep_time)
 
 
     def _send_keys(self, text, element, sleep_time=const.DEFAULT_ACTION_SLEEP_TIME):
