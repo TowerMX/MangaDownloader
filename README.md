@@ -7,6 +7,8 @@ Los ficheros de configuración involucrados son:
 2. config/credentials.yaml
 3. config/mangalist.yaml
 
+Sólo es necesario rellenar el tercero con los mangas que queramos descargar y ejecutar el archivo main.py a mano o desde el archivo run.bat (sólo Windows). Más abajo se explica cómo deben rellenarse.
+
 ## config/config.yaml
 
 La estructura es:
