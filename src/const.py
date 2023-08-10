@@ -109,4 +109,4 @@ def set_language(language="es", logger=None):
         CHAPTER_PREFIX = "Chapitre"
     else:
         if logger is not None:
-            logger.error("Idioma no reconocido, los idiomas soportados están en el README")
+            logger.error("Idioma no reconocido, los idiomas soportados están en el README. Se ha establecido el idioma por defecto (español).")

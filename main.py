@@ -9,22 +9,20 @@ def run():
     myloader = loader.Loader(logger)
     const.recalculatePaths(os.getcwd())
 
-    config_regenerated = False
+    config_items_restored = []
     if not os.path.isdir(const.CONFIG_FOLDER):
         Path(const.CONFIG_FOLDER).mkdir(exist_ok=True)
-        config_regenerated = True
     if not os.path.exists(const.DEFAULT_CONFIG_FILE):
         utils.create_default_config_file()
-        config_regenerated = True
+        config_items_restored.append("config")
     if not os.path.exists(const.DEFAULT_CREDENTIALS_FILE):
         utils.create_default_credentials_file()
-        config_regenerated = True
+        config_items_restored.append("credentials")
     if not os.path.exists(const.DEFAULT_MANGALIST_FILE):
         utils.create_default_mangalist_file()
-        config_regenerated = True
-    if config_regenerated:
-        logger.info(
-            "Se han generado los archivos de configuración por defecto. Por favor, edítelos y vuelva a ejecutar el programa.")
+        config_items_restored.append("mangalist")
+    if len(config_items_restored) > 0:
+        logger.info("se han restaurado los siguientes archivos: " + ", ".join(config_items_restored) + ". Por favor, edítelos si es necesario y vuelva a ejecutar el programa.")
         return
 
     config, credentials, mangalist, temp_folder, save_folder = myloader.load_config()
