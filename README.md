@@ -1,11 +1,13 @@
 # MangaDownloader
 
-Este es un proyecto para descargar mangas de mangadex.org en formato PDF, divididos por capítulos y agrupados por volúmenes.
+Este es un proyecto para descargar mangas de mangadex.org en formato PDF.
 
 Los ficheros de configuración involucrados son:
 1. config/config.yaml
 2. config/credentials.yaml
 3. config/mangalist.yaml
+
+Sólo es necesario rellenar el tercero con los mangas que queramos descargar y ejecutar el archivo main.py a mano o desde el archivo run.bat (sólo Windows). Más abajo se explica cómo deben rellenarse.
 
 ## config/config.yaml
 
@@ -67,6 +69,6 @@ La estructura es:
 ```
 
 Se pueden añadir tantos mangas como se quiera, poniendo un guión (-) al principio de cada manga.
-El nombre elegido es el que se usará para crear la carpeta donde se descargará el manga, y la url es el enlace a la primera página del primer capítulo del manga.
+El nombre elegido es el que se usará para crear la carpeta donde se descargará el manga, y la url es el enlace a la lectura de una página del manga (no al manga en sí).
 
 Para los capítulos inicial y final puede escribirse "first" y "last" respectivamente, o el número del capítulo que se quiera.
