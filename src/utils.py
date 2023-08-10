@@ -56,3 +56,36 @@ def _images_to_pdf(images_folder, pdf_path):
         image_list[0].save(
             pdf_path, "PDF", resolution=100.0
         )
+
+
+def create_default_config_file():
+    with open(const.DEFAULT_CONFIG_FILE, "w") as f:
+        f.write(
+            '''language: "es"
+login: false
+delete_images: true
+temp_path:
+save_path:'''
+        )
+
+
+def create_default_credentials_file():
+    with open(const.DEFAULT_CREDENTIALS_FILE, "w") as f:
+        f.write(
+            '''username:
+password:'''
+        )
+
+
+def create_default_mangalist_file():
+    with open(const.DEFAULT_MANGALIST_FILE, "w") as f:
+        f.write(
+            '''- name:
+  url:
+  first_chapter: "first"
+  last_chapter: "last"
+- name:
+  url:
+  first_chapter: "first"
+  last_chapter: "last"'''
+        )

@@ -92,7 +92,7 @@ def set_language(language="es", logger=None):
     if language == "es":
         VOLUME_PREFIX = "Volumen"
         CHAPTER_PREFIX = "Capítulo"
-    if language == "pt":
+    elif language == "pt":
         VOLUME_PREFIX = "Volume"
         CHAPTER_PREFIX = "Capítulo"
     elif language == "en":

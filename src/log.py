@@ -3,8 +3,7 @@ import logging
 from . import const
 
 
-def configureLogger(name):
-    handleLogFolder(const.LOG_FOLDER)
+def configureLogger(name, save_log=False):
 
     log_file = const.DEFAULT_LOG_FILE + ".log"
 
@@ -16,18 +15,15 @@ def configureLogger(name):
 
     # "[%(levelname)s] - %(asctime)s - %(name)s - : %(message)s in %(pathname)s:%(lineno)d"
 
-    fh = logging.FileHandler(os.path.join(const.LOG_FOLDER, log_file))
+    if save_log:
+        if not os.path.exists(const.LOG_FOLDER):
+            os.makedirs(const.LOG_FOLDER)
+        fh = logging.FileHandler(os.path.join(const.LOG_FOLDER, log_file))
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
+
     ch = logging.StreamHandler()
-
-    fh.setFormatter(formatter)
     ch.setFormatter(formatter)
-
-    logger.addHandler(fh)
     logger.addHandler(ch)
 
     return logger
-
-
-def handleLogFolder(path):
-    if not os.path.exists(path):
-        os.makedirs(path)

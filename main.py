@@ -5,15 +5,33 @@ from src import const, log, driver, loader, utils
 
 def run():
 
-    logger = log.configureLogger(__name__)
+    logger = log.configureLogger(__name__, save_log=False)
     myloader = loader.Loader(logger)
+    const.recalculatePaths(os.getcwd())
+
+    config_regenerated = False
+    if not os.path.isdir(const.CONFIG_FOLDER):
+        Path(const.CONFIG_FOLDER).mkdir(exist_ok=True)
+        config_regenerated = True
+    if not os.path.exists(const.DEFAULT_CONFIG_FILE):
+        utils.create_default_config_file()
+        config_regenerated = True
+    if not os.path.exists(const.DEFAULT_CREDENTIALS_FILE):
+        utils.create_default_credentials_file()
+        config_regenerated = True
+    if not os.path.exists(const.DEFAULT_MANGALIST_FILE):
+        utils.create_default_mangalist_file()
+        config_regenerated = True
+    if config_regenerated:
+        logger.info(
+            "Se han generado los archivos de configuración por defecto. Por favor, edítelos y vuelva a ejecutar el programa.")
+        return
 
     config, credentials, mangalist, temp_folder, save_folder = myloader.load_config()
-    const.recalculatePaths(os.getcwd())
     try:
-        const.set_language(config["language"], logger)
+        const.set_language(language=config["language"], logger=logger)
     except KeyError:
-        const.set_language("es")
+        const.set_language(language="es")
 
     try:
         Path(temp_folder).mkdir(exist_ok=True)

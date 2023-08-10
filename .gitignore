@@ -1,5 +1,8 @@
 .idea/
 __pycache__
 log/
+build/
+dist/
+main.spec
 temp/
 mangas/
