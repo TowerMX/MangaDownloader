@@ -1,8 +1,6 @@
 - name:
   url:
-  first_chapter: "first"
-  last_chapter: "last"
-- name:
-  url:
-  first_chapter: "first"
-  last_chapter: "last"
+  first_chapter: first
+  last_chapter: last
+  trim_first_pages: 0
+  trim_last_pages: 0

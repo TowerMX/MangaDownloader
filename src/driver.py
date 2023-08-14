@@ -91,7 +91,7 @@ class MyDriver:
             self.logger.info("La sesión ya estaba iniciada.")
 
 
-    def download_manga(self, manga_name, manga_url, first_chapter="first", last_chapter="last", temp_folder=const.DEFAULT_TEMP_FOLDER):
+    def download_manga(self, manga_name, manga_url, first_chapter="first", last_chapter="last", trim_first_pages=0, trim_last_pages=0, temp_folder=const.DEFAULT_TEMP_FOLDER):
         self.logger.info(f"Comenzando descarga de imágenes de {manga_name}...")
         # Crea carpeta del manga
         try:
@@ -199,7 +199,7 @@ class MyDriver:
                 self.logger.error("Error en la URL durante la descarga. Descarga del manga incompleta.")
                 return False
 
-            current_chapter, is_last_page = self._download_image(manga_name, temp_folder=temp_folder)
+            current_chapter, is_last_page = self._download_image(manga_name, trim_first_pages=trim_first_pages, trim_last_pages=trim_last_pages, temp_folder=temp_folder)
 
             if is_last_page:
                 self._turn_page(direction="forward", sleep_time=const.DEFAULT_CHAPTER_CHANGE_SLEEP_TIME)
@@ -211,7 +211,7 @@ class MyDriver:
         return True
 
 
-    def _download_image(self, manga_name, temp_folder=const.DEFAULT_TEMP_FOLDER):
+    def _download_image(self, manga_name, trim_first_pages=0, trim_last_pages=0, temp_folder=const.DEFAULT_TEMP_FOLDER):
         status_updated = False
         while not status_updated:
             try:
@@ -220,6 +220,13 @@ class MyDriver:
                 status_updated = True
             except (NoSuchElementException, ValueError, IndexError, Exception):
                 self._wait(const.DEFAULT_RETRY_SLEEP_TIME)
+
+        if trim_first_pages + trim_last_pages >= int(last_page):
+            self.logger.error(f"El número de páginas a recortar ({trim_first_pages + trim_last_pages}) es superior o igual al número de páginas del capítulo ({last_page}).")
+            return float(chapter), page == last_page
+        if int(page) <= trim_first_pages or int(last_page) - int(page) < trim_last_pages:
+            self.logger.info(f"Página a recortar, no se descarga.")
+            return float(chapter), page == last_page
 
         if volume == "Oneshot":
             self.logger.info(f"Oneshot, Pages: {page} / {last_page}")

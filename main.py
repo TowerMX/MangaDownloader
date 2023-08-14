@@ -6,47 +6,29 @@ from src import const, log, driver, loader, utils
 def run():
 
     logger = log.configureLogger(__name__, save_log=False)
-    myloader = loader.Loader(logger)
+    myloader = loader.Loader(logger=logger)
     const.recalculatePaths(os.getcwd())
 
     config_items_restored = []
     if not os.path.isdir(const.CONFIG_FOLDER):
         Path(const.CONFIG_FOLDER).mkdir(exist_ok=True)
     if not os.path.exists(const.DEFAULT_CONFIG_FILE):
-        utils.create_default_config_file()
+        utils.create_default_config_file(logger=logger)
         config_items_restored.append("config")
     if not os.path.exists(const.DEFAULT_CREDENTIALS_FILE):
-        utils.create_default_credentials_file()
+        utils.create_default_credentials_file(logger=logger)
         config_items_restored.append("credentials")
     if not os.path.exists(const.DEFAULT_MANGALIST_FILE):
-        utils.create_default_mangalist_file()
+        utils.create_default_mangalist_file(logger=logger)
         config_items_restored.append("mangalist")
     if len(config_items_restored) > 0:
         logger.info("se han restaurado los siguientes archivos: " + ", ".join(config_items_restored) + ". Por favor, edítelos si es necesario y vuelva a ejecutar el programa.")
         return
 
-    config, credentials, mangalist, temp_folder, save_folder = myloader.load_config()
-    try:
-        const.set_language(language=config["language"], logger=logger)
-    except KeyError:
-        const.set_language(language="es")
-
-    try:
-        Path(temp_folder).mkdir(exist_ok=True)
-    except FileNotFoundError:
-        logger.error("La ubicación de la carpeta de descarga no es válida o no existe el directorio que la contiene.")
-        return
-    try:
-        Path(save_folder).mkdir(exist_ok=True)
-    except FileNotFoundError:
-        logger.error("La ubicación de la carpeta de guardado no es válida o no existe el directorio que la contiene.")
-        return
-
-    try:
-        len(mangalist)
-    except TypeError:
-        logger.warning("La lista de mangas está vacía.")
-        return
+    config, credentials, mangalist = myloader.load_config()
+    config, temp_folder, save_folder = utils.sanitize_config(config, logger=logger)
+    credentials = utils.sanitize_credentials(credentials, logger=logger)
+    mangalist = utils.sanitize_mangalist(mangalist, logger=logger)
 
     browser = driver.MyDriver(logger, sandbox=False)
     browser.navigate_to_home()
@@ -57,16 +39,33 @@ def run():
         else:
             logger.warning("No se han encontrado credenciales. No se iniciará sesión.")
 
+    if config["show_volumes"] is False:
+        logger.info("No se mostrarán los volúmenes debido a la configuración, lo que conlleva que los capítulos se encuentren separados sin crear carpetas para cada volumen.")
+
     for manga in mangalist:
+        if manga["url"] is None:
+            if manga["name"] is not None:
+                logger.error(f"No se ha especificado la URL del manga {manga['name']}. Se omitirá este manga.")
+            continue
+
         # Descarga de imágenes
-        downloaded_correctly = browser.download_manga(manga["name"], manga["url"], manga["first_chapter"], manga["last_chapter"], temp_folder=temp_folder)
+        downloaded_correctly = browser.download_manga(manga_name=manga["name"], manga_url=manga["url"],
+                                                      first_chapter=manga["first_chapter"],
+                                                      last_chapter=manga["last_chapter"],
+                                                      trim_first_pages=manga["trim_first_pages"],
+                                                      trim_last_pages=manga["trim_last_pages"],
+                                                      temp_folder=temp_folder)
         if not downloaded_correctly:
             logger.error("Ha habido un problema en la descarga, se omitirá este manga.")
             continue
 
         # Conversión a PDF
         logger.info("Convirtiendo a PDF...")
-        converted_correctly = utils.convert_to_pdf(manga["name"], temp_folder=temp_folder, save_folder=save_folder)
+        converted_correctly = utils.convert_to_pdf(manga_name=manga["name"],
+                                                   show_volumes=config["show_volumes"],
+                                                   separate_chapters=config["separate_chapters"],
+                                                   volume_folders=config["volume_folders"],
+                                                   temp_folder=temp_folder, save_folder=save_folder)
         if converted_correctly:
             logger.info("Convertido a PDF correctamente.")
         else:
@@ -74,7 +73,7 @@ def run():
 
         # Borrado de imágenes si se solicita
         if config["delete_images"] is True:
-            utils.delete_files(manga["name"], temp_folder)
+            utils.delete_files(manga_name=manga["name"], folder=temp_folder)
             logger.info("Las imágenes descargadas han sido borradas.")
 
     browser.close()

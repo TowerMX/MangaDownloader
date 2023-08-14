@@ -1,5 +1,8 @@
-language: "es"
-login: false
-delete_images: true
+language: es
+login: no
+delete_images: yes
+show_volumes: yes
+separate_chapters: yes
+volume_folders: no
 temp_path:
 save_path:

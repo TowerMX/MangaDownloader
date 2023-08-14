@@ -28,6 +28,9 @@ DEFAULT_MANGALIST_FILE = os.path.join(CONFIG_FOLDER, "mangalist.yaml")
 DEFAULT_TEMP_FOLDER = os.path.join(ROOT_PATH, "temp")
 DEFAULT_SAVE_FOLDER = os.path.join(ROOT_PATH, "mangas")
 
+FORBIDDEN_CHARACTERS = ["\\", "/", ": ", ":", "*", "?", "\"", "<", ">", "|"]
+REPLACING_CHARACTERS = ["_", "_", " - ", "-", "-", "_", "'", "-", "-", "-"]
+
 VOLUME_PREFIX = "Volumen"
 CHAPTER_PREFIX = "Capítulo"
 
@@ -62,12 +65,28 @@ MANGA_IMAGE_CLASS = "img sp limit-width limit-height mx-auto"
 MANGA_IMAGE_XPATH = "/html/body/div[1]/div[1]/div[2]/div[2]/div/div[1]/div[2]/div[1]/div/img[not (@style=\"display: none;\")]"
 MANGA_IMAGE_CSS_SELECTOR = "img.img:nth-child(1)"
 
+MANGA_TITLE_TITLE_XPATH = "/html/body/div[1]/div[1]/div[2]/div[2]/div/div[4]/p"
+MANGA_CHAPTER_TITLE_XPATH = "/html/body/div[1]/div[1]/div[2]/div[2]/div/div[1]/div[1]/div[1]/a"
+MANGA_SELECT_GROUP_XPATH = "/html/body/div[1]/div[12]/div[2]/div/div[1]"
+MANGA_START_READING_BUTTON_XPATH = "/html/body/div[1]/div[1]/div[2]/div[2]/div/div[5]/div/button[3]"
+
 DEFAULT_ACTION_SLEEP_TIME = 0.1  # seconds
 DEFAULT_BROWSE_SLEEP_TIME = 0.3  # seconds
 DEFAULT_LOGIN_SLEEP_TIME = 0.5  # seconds
 DEFAULT_PAGE_TURN_SLEEP_TIME = 0.1  # seconds
 DEFAULT_CHAPTER_CHANGE_SLEEP_TIME = 0.3  # seconds
 DEFAULT_RETRY_SLEEP_TIME = 0.1  # seconds
+
+
+# CONFIG CONSTANTS
+
+CONFIG_TEMPLATE = {"language": "es", "login": "no", "delete_images": "yes", "show_volumes": "yes",
+                "separate_chapters": "yes", "volume_folders": "no", "temp_path": None, "save_path": None}
+CREDENTIALS_TEMPLATE = {"username": None, "password": None}
+MANGA_TEMPLATE = {"name": None, "url": None, "first_chapter": "first", "last_chapter": "last",
+               "trim_first_pages": 0, "trim_last_pages": 0}
+
+VALID_LANGUAGES = ["es", "pt", "en", "de", "it", "fr"]
 
 
 def recalculatePaths(root_path):
