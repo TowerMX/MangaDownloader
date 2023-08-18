@@ -85,7 +85,7 @@ Se pueden añadir tantos mangas como se quiera, poniendo un guión (-) al princi
 
 **name**: Es el nombre que se usará para la carpeta del manga. Los caracteres no permitidos en Windows para nombres de carpetas serán sustituidos por otros válidos.
 
-**url**: Una vez en la página del manga, se debe entrar en la lectura de un capítulo y copiar la url de la página. Esto se hace para elegir un idioma antes de comenzar a descargar, en la versión 1.0.1 se añadirá la opción de elegirlo sobre la marcha.
+**url**: Una vez en la página del manga, se debe entrar en la lectura de un capítulo y copiar la url de la página. Esto se hace para elegir un idioma antes de comenzar a descargar, en la versión 1.1.0 se añadirá la opción de elegirlo sobre la marcha.
 
 **first_chapter**: Para comenzar a descargar desde el principio se debe escribir *first*, si se quiere empezar desde un capítulo concreto se debe escribir el número del capítulo.
 
