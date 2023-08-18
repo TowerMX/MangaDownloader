@@ -118,6 +118,7 @@ def sanitize_config(config, config_path=const.DEFAULT_CONFIG_FILE, logger=None):
 
     if config["temp_path"] is not None:
         temp_folder = config["temp_path"]
+        print(temp_folder)
         try:
             Path(temp_folder).mkdir(exist_ok=True)
         except (FileNotFoundError, Exception):
@@ -137,20 +138,41 @@ def sanitize_config(config, config_path=const.DEFAULT_CONFIG_FILE, logger=None):
     else:
         save_folder = const.DEFAULT_SAVE_FOLDER
 
-    set_yaml(config, config_path, logger=logger)
+    # Para que guarde los valores como "yes" o "no" en vez de True o False
+    config_saved = config.copy()
+    for (key, value) in config_saved.items():
+        if value is True:
+            config_saved[key] = "yes"
+        elif value is False:
+            config_saved[key] = "no"
+
+    set_yaml(config_saved, config_path, logger=logger)
+
+    # No debería hacer falta quitar las comillas así ya que se supone que ya se hace en set_yaml, pero es necesario
+    with open(config_path, "r") as f:
+        config_text = f.read()
+    config_text = config_text.replace(": 'yes'", ": yes")
+    config_text = config_text.replace(": 'no'", ": no")
+    with open(config_path, "w") as f:
+        f.write(config_text)
 
     return config, temp_folder, save_folder
 
 
 def sanitize_credentials(credentials, credentials_path=const.DEFAULT_CREDENTIALS_FILE, logger=None):
-    credentials = const.CREDENTIALS_TEMPLATE | credentials
+    if credentials is not None:
+        credentials = const.CREDENTIALS_TEMPLATE | credentials
+    else:
+        credentials = const.CREDENTIALS_TEMPLATE
     for key in credentials.keys():
         if key not in const.CREDENTIALS_TEMPLATE.keys():
             credentials.pop(key)
             if logger is not None:
                 logger.warning(f"El campo credentials/{key} no es utilizado por este programa. Revise el README.")
             continue
-        if not isinstance(credentials[key], str):
+        if credentials[key] is None:
+            continue
+        elif not isinstance(credentials[key], str):
             if logger is not None:
                 logger.warning(f"El valor de credentials/{key} no es adecuado y ha sido borrado.")
             credentials[key] = None
@@ -169,7 +191,7 @@ def sanitize_mangalist(mangalist, mangalist_path=const.DEFAULT_MANGALIST_FILE, l
             if not isinstance(manga, dict):
                 mangalist[index] = const.MANGA_TEMPLATE
                 if logger is not None:
-                    logger.warning(f"El manga nº {index} no es válido. Se cambiará por la plantilla por defecto.")
+                    logger.warning(f"El manga nº {index+1} no es válido. Se cambiará por la plantilla por defecto.")
                 continue
             manga = const.MANGA_TEMPLATE | manga
             for key in manga.keys():
@@ -183,13 +205,13 @@ def sanitize_mangalist(mangalist, mangalist_path=const.DEFAULT_MANGALIST_FILE, l
                 if manga["name"] is not None:
                     manga["name"] = None
                 if logger is not None:
-                    logger.warning(f"El nombre del manga nº {index} está vacío. Se utilizará el título de la página web.")
+                    logger.warning(f"El nombre del manga nº {index+1} está vacío. Se utilizará el título de la página web.")
             elif isinstance(manga["name"], (int, float, bool)):
                 manga["name"] = str(manga["name"])
             elif not isinstance(manga["name"], str):
                 manga["name"] = None
                 if logger is not None:
-                    logger.warning(f"El nombre del manga nº {index} no es válido. Se utilizará el título de la página web.")
+                    logger.warning(f"El nombre del manga nº {index+1} no es válido. Se utilizará el título de la página web.")
             else:
                 manga["name"] = parse_title(manga["name"])
 
@@ -200,14 +222,14 @@ def sanitize_mangalist(mangalist, mangalist_path=const.DEFAULT_MANGALIST_FILE, l
                     if manga["name"] is not None:
                         logger.warning(f"La URL del manga {manga['name']} está vacía. No se descargará este manga.")
                     else:
-                        logger.warning(f"La URL del manga nº {index} está vacía. No se descargará este manga.")
+                        logger.warning(f"La URL del manga nº {index+1} está vacía. No se descargará este manga.")
             elif not isinstance(manga["name"], str):
                 manga["url"] = None
                 if logger is not None:
                     if manga["name"] is not None:
                         logger.warning(f"La URL del manga {manga['name']} no es válida. No se descargará este manga.")
                     else:
-                        logger.warning(f"La URL del manga nº {index} no es válida. No se descargará este manga.")
+                        logger.warning(f"La URL del manga nº {index+1} no es válida. No se descargará este manga.")
 
             if not isinstance(manga["first_chapter"], (int, float)) and manga["first_chapter"] != "first":
                 manga["first_chapter"] = const.MANGA_TEMPLATE["first_chapter"]
@@ -215,7 +237,7 @@ def sanitize_mangalist(mangalist, mangalist_path=const.DEFAULT_MANGALIST_FILE, l
                     if manga["name"] is not None:
                         logger.warning(f"El valor de mangalist/{manga['name']}/first_chapter no es válido. Se utilizará el valor por defecto: {const.MANGA_TEMPLATE['first_chapter']}.")
                     else:
-                        logger.warning(f"El valor de mangalist/manga nº {index}/first_chapter no es válido. Se utilizará el valor por defecto: {const.MANGA_TEMPLATE['first_chapter']}.")
+                        logger.warning(f"El valor de mangalist/manga nº {index+1}/first_chapter no es válido. Se utilizará el valor por defecto: {const.MANGA_TEMPLATE['first_chapter']}.")
 
             if not isinstance(manga["last_chapter"], (int, float)) and manga["last_chapter"] != "last":
                 manga["last_chapter"] = const.MANGA_TEMPLATE["last_chapter"]
@@ -223,7 +245,7 @@ def sanitize_mangalist(mangalist, mangalist_path=const.DEFAULT_MANGALIST_FILE, l
                     if manga["name"] is not None:
                         logger.warning(f"El valor de mangalist/{manga['name']}/last_chapter no es válido. Se utilizará el valor por defecto: {const.MANGA_TEMPLATE['last_chapter']}.")
                     else:
-                        logger.warning(f"El valor de mangalist/manga nº {index}/last_chapter no es válido. Se utilizará el valor por defecto: {const.MANGA_TEMPLATE['last_chapter']}.")
+                        logger.warning(f"El valor de mangalist/manga nº {index+1}/last_chapter no es válido. Se utilizará el valor por defecto: {const.MANGA_TEMPLATE['last_chapter']}.")
 
             if not isinstance(manga["trim_first_pages"], int) or manga["trim_first_pages"] < 0:
                 manga["trim_first_pages"] = const.MANGA_TEMPLATE["trim_first_pages"]
@@ -231,7 +253,7 @@ def sanitize_mangalist(mangalist, mangalist_path=const.DEFAULT_MANGALIST_FILE, l
                     if manga["name"] is not None:
                         logger.warning(f"El valor de mangalist/{manga['name']}/trim_first_pages no es válido. Se utilizará el valor por defecto: {const.MANGA_TEMPLATE['trim_first_pages']}.")
                     else:
-                        logger.warning(f"El valor de mangalist/manga nº {index}/trim_first_pages no es válido. Se utilizará el valor por defecto: {const.MANGA_TEMPLATE['trim_first_pages']}.")
+                        logger.warning(f"El valor de mangalist/manga nº {index+1}/trim_first_pages no es válido. Se utilizará el valor por defecto: {const.MANGA_TEMPLATE['trim_first_pages']}.")
 
             if not isinstance(manga["trim_last_pages"], int) or manga["trim_last_pages"] < 0:
                 manga["trim_last_pages"] = const.MANGA_TEMPLATE["trim_last_pages"]
@@ -239,7 +261,7 @@ def sanitize_mangalist(mangalist, mangalist_path=const.DEFAULT_MANGALIST_FILE, l
                     if manga["name"] is not None:
                         logger.warning(f"El valor de mangalist/{manga['name']}/trim_last_pages no es válido. Se utilizará el valor por defecto: {const.MANGA_TEMPLATE['trim_last_pages']}.")
                     else:
-                        logger.warning(f"El valor de mangalist/manga nº {index}/trim_last_pages no es válido. Se utilizará el valor por defecto: {const.MANGA_TEMPLATE['trim_last_pages']}.")
+                        logger.warning(f"El valor de mangalist/manga nº {index+1}/trim_last_pages no es válido. Se utilizará el valor por defecto: {const.MANGA_TEMPLATE['trim_last_pages']}.")
 
         mangalist[index] = manga
     else:
@@ -256,6 +278,13 @@ def sanitize_mangalist(mangalist, mangalist_path=const.DEFAULT_MANGALIST_FILE, l
 
 def create_default_config_file(logger=None):
     set_yaml(const.CONFIG_TEMPLATE, const.DEFAULT_CONFIG_FILE, logger=logger)
+    # No debería hacer falta quitar las comillas así ya que se supone que ya se hace en set_yaml, pero es necesario
+    with open(const.DEFAULT_CONFIG_FILE, "r") as f:
+        config_text = f.read()
+    config_text = config_text.replace(": 'yes'", ": yes")
+    config_text = config_text.replace(": 'no'", ": no")
+    with open(const.DEFAULT_CONFIG_FILE, "w") as f:
+        f.write(config_text)
 
 
 def create_default_credentials_file(logger=None):
@@ -268,10 +297,14 @@ def create_default_mangalist_file(logger=None):
 
 def set_yaml(content, path, logger=None):
     try:
+        # Deja en blanco en vez de poner none
         yaml.SafeDumper.add_representer(
             type(None),
             lambda dumper, value: dumper.represent_scalar('tag:yaml.org,2002:null', '')
         )
+        # Elimina los "punteros" (aliases/anchors) en las listas
+        yaml.SafeDumper.ignore_aliases = lambda *args: True
+        # No muestra comillas en los strings y cada valor en una línea sin reordenarse
         with open(path, "w") as f:
             yaml.safe_dump(content, f, sort_keys=False, default_style=None, default_flow_style=False)
     except Exception:

@@ -22,7 +22,7 @@ def run():
         utils.create_default_mangalist_file(logger=logger)
         config_items_restored.append("mangalist")
     if len(config_items_restored) > 0:
-        logger.info("se han restaurado los siguientes archivos: " + ", ".join(config_items_restored) + ". Por favor, edítelos si es necesario y vuelva a ejecutar el programa.")
+        logger.info("Se han restaurado los siguientes archivos: " + ", ".join(config_items_restored) + ". Por favor, edítelos si es necesario y vuelva a ejecutar el programa.")
         return
 
     config, credentials, mangalist = myloader.load_config()
