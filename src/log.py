@@ -5,8 +5,6 @@ from . import const
 
 def configureLogger(name, save_log=False):
 
-    log_file = const.DEFAULT_LOG_FILE + ".log"
-
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
     formatter = logging.Formatter(
@@ -16,6 +14,7 @@ def configureLogger(name, save_log=False):
     # "[%(levelname)s] - %(asctime)s - %(name)s - : %(message)s in %(pathname)s:%(lineno)d"
 
     if save_log:
+        log_file = const.DEFAULT_LOG_FILE + ".log"
         if not os.path.exists(const.LOG_FOLDER):
             os.makedirs(const.LOG_FOLDER)
         fh = logging.FileHandler(os.path.join(const.LOG_FOLDER, log_file))

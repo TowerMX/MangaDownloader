@@ -1,12 +1,15 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, NoSuchDriverException, SessionNotCreatedException
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
+from webdriver_auto_update.webdriver_auto_update import WebdriverAutoUpdate
 from pathlib import Path
+import shutil
 import platform
+import os
 import time
 import base64
 from . import const
@@ -15,11 +18,13 @@ from . import const
 class MyDriver:
     base_url = "https://mangadex.org/"
 
-    def __init__(self, logger, sandbox=False):
+    def __init__(self, logger, headless=True, sandbox=False):
         self.logger = logger
+        self.headless = headless
         self.sandbox = sandbox
         if self.sandbox:
             self.logger.debug("Modo sandbox activado.")
+            self.headless = False
         self.logger.debug("Inicializando el driver...")
         platform_os = platform.system()
 
@@ -30,30 +35,65 @@ class MyDriver:
 
         # Set the user agent and other custom headers
         chrome_options.add_argument("user-agent=" + user_agent)
-        chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--disable-setuid-sandbox")
+        if self.headless:
+            chrome_options.add_argument("--headless=new")
+        if not self.sandbox:
+            chrome_options.add_argument("--no-sandbox")
+            chrome_options.add_argument("--disable-setuid-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--disable-accelerated-2d-canvas")
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--window-size=1920,1200")
         chrome_options.add_argument("--hide-scrollbars")
 
-        if platform_os == "Linux":
-            driver_path = const.LINUX_DRIVER_PATH
-        else:  # platform_os == 'Windows'
+        if platform_os == "Windows":
             driver_path = const.WINDOWS_DRIVER_PATH
+            driver_folder_path = const.WINDOWS_FOLDER_PATH
+        # elif platform_os == "Darwin":
+        #     driver_path = const.MACOS_DRIVER_PATH
+        #     driver_folder_path = const.MACOS_FOLDER_PATH
+        else:  # platform_os == "Linux"
+            driver_path = const.LINUX_DRIVER_PATH
+            driver_folder_path = const.LINUX_FOLDER_PATH
 
-        service = Service(executable_path=driver_path)
-
-        self.driver = webdriver.Chrome(service=service, options=chrome_options)
-        self.logger.debug(f"Se ha inicializado el driver con el os {platform_os}.")
+        try:
+            service = Service(executable_path=driver_path)
+            self.driver = webdriver.Chrome(service=service, options=chrome_options)
+        except NoSuchDriverException:
+            self.logger.debug("Actualizando el driver...")
+            shutil.rmtree(driver_folder_path, ignore_errors=True)
+            Path(const.DRIVER_BASE_FOLDER_PATH).mkdir(exist_ok=True)
+            Path(driver_folder_path).mkdir(exist_ok=True)
+            WebdriverAutoUpdate(driver_folder_path).main()
+            for file in os.scandir(driver_folder_path):
+                if file.is_dir():
+                    shutil.rmtree(rf"{driver_folder_path}\{file.name}", ignore_errors=True)
+            self.logger.debug("Driver actualizado correctamente.")
+            service = Service(executable_path=driver_path)
+            self.driver = webdriver.Chrome(service=service, options=chrome_options)
+        except SessionNotCreatedException:
+            self.logger.debug("Actualizando el driver...")
+            WebdriverAutoUpdate(driver_folder_path).main()
+            for file in os.scandir(driver_folder_path):
+                if file.is_dir():
+                    shutil.rmtree(rf"{driver_folder_path}\{file.name}", ignore_errors=True)
+            self.logger.debug("Driver actualizado correctamente.")
+            service = Service(executable_path=driver_path)
+            self.driver = webdriver.Chrome(service=service, options=chrome_options)
+        self.logger.debug(f"Se ha inicializado el driver con el OS {platform_os}.")
 
 
     def login(self, username, password, remember_me=False):
         initial_url = self.driver.current_url
         # Abre el menú de usuario
-        avatar = self.driver.find_element(By.ID, const.AVATAR_ID)
-        self._click(avatar)
+        page_loaded = False
+        while not page_loaded:
+            try:
+                avatar = self.driver.find_element(By.ID, const.AVATAR_ID)
+                self._click(avatar)
+                page_loaded = True
+            except NoSuchElementException:
+                self._wait(const.DEFAULT_RETRY_SLEEP_TIME)
 
         try:
             # Busca el botón de registrarse
@@ -107,6 +147,7 @@ class MyDriver:
             self._navigate(manga_url)
         elif url_check == "title":
             self.logger.warning("Esta es la URL de un manga, pero se debe introducir la URL de una página una vez dentro. El manga no se descargará.")
+            self._select_manga_group()
             return False
         else:
             self.logger.error("Error en la URL, el manga no se descargará.")
@@ -270,6 +311,32 @@ class MyDriver:
 
         return float(chapter), page==last_page
 
+
+    def _select_manga_group(self):
+        title_url = self.driver.current_url
+        secondary_browser = MyDriver(self.logger, headless=False, sandbox=False)
+        page_loaded = False
+        while not page_loaded:
+            try:
+                start_reading_button = self.driver.find_element(By.XPATH, const.MANGA_START_READING_BUTTON_XPATH)
+                self._click(start_reading_button)
+                page_loaded = True
+            except NoSuchElementException:
+                self._wait(const.DEFAULT_RETRY_SLEEP_TIME)
+        page_loaded = False
+        while not page_loaded:
+            try:
+                start_reading_button = secondary_browser.driver.find_element(By.XPATH, const.MANGA_START_READING_BUTTON_XPATH)
+                self._click(start_reading_button)
+                page_loaded = True
+            except NoSuchElementException:
+                self._wait(const.DEFAULT_RETRY_SLEEP_TIME)
+
+
+
+        while self.driver.current_url == title_url:
+            self._wait(const.DEFAULT_RETRY_SLEEP_TIME)
+        return self.driver.current_url
 
     def _get_page_status(self):
         chapter_element = self.driver.find_element(By.XPATH, const.MANGA_CHAPTER_XPATH)

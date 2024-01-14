@@ -30,7 +30,7 @@ def run():
     credentials = utils.sanitize_credentials(credentials, logger=logger)
     mangalist = utils.sanitize_mangalist(mangalist, logger=logger)
 
-    browser = driver.MyDriver(logger, sandbox=False)
+    browser = driver.MyDriver(logger, headless=True, sandbox=False)
     browser.navigate_to_home()
 
     if config["login"] is True:

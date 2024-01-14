@@ -1,14 +1,16 @@
 # MangaDownloader
-### Ver. 1.0.0
+### Ver. 1.1.0
 
-Este es un proyecto para descargar mangas de mangadex.org en formato PDF.
+Este es un proyecto para descargar mangas exclusivamente de mangadex.org en formato PDF.
 
 Los ficheros de configuración involucrados son:
 1. config/config.yaml
 2. config/credentials.yaml
 3. config/mangalist.yaml
 
-Sólo es necesario rellenar el tercero con los mangas que queramos descargar y ejecutar el archivo main.py a mano o desde el archivo run.bat o run-linux.sh, según el sistema operativo que se use. Más abajo se explica cómo deben rellenarse.
+A continuación se explica cómo rellenar cada uno de ellos.
+
+Tras elegir la configuración deseado e introducir los mangas que queramos descargar, se puede ejecutar el archivo main.py con Python o usar los archivos run.bat o run-linux.sh, según el sistema operativo que se use.
 
 ## config/config.yaml
 
@@ -83,9 +85,9 @@ La estructura es:
 
 Se pueden añadir tantos mangas como se quiera, poniendo un guión (-) al principio de cada manga.
 
-**name**: Es el nombre que se usará para la carpeta del manga. Los caracteres no permitidos en Windows para nombres de carpetas serán sustituidos por otros válidos.
+**name**: Es el nombre que se usará para la carpeta del manga. Si se deja en blanco, se usará el nombre que aparece en la web.
 
-**url**: Una vez en la página del manga, se debe entrar en la lectura de un capítulo y copiar la url de la página. Esto se hace para elegir un idioma antes de comenzar a descargar, en la versión 1.1.0 se añadirá la opción de elegirlo sobre la marcha.
+**url**: Se puede introducir la página del manga, y si dispone de varios idiomas se esperará a elegir el deseado durante la ejecución del programa. Si queremos elegirlo de antemano para que el programa no se detenga, deberemos entrar a leer cualquier capítulo en el idioma deseado, e introducir la url de ese capítulo.
 
 **first_chapter**: Para comenzar a descargar desde el principio se debe escribir *first*, si se quiere empezar desde un capítulo concreto se debe escribir el número del capítulo.
 
@@ -94,3 +96,16 @@ Se pueden añadir tantos mangas como se quiera, poniendo un guión (-) al princi
 **trim_first_pages**: Si se desea eliminar páginas del principio de cada capítulo, por ejemplo, porque incluya publicidad, se puede indicar el número de páginas a eliminar. Si no se quiere eliminar ninguna página se puede introducir 0. Hay que tener en cuenta que si en algún capítulo no se incluye la publicidad, se estarían borrando páginas de forma indeseada.
 
 **trim_last_pages**: De la misma forma que el anterior, si se quiere eliminar páginas del final de cada capítulo, se puede indicar el número o escribir 0 si no se quiere borrar ninguna.
+
+
+
+# Historial de versiones
+
+### Ver. 1.1.0
+
+- Añadida actualización automática del driver
+
+### Ver. 1.0.0
+
+- Funcionamiento básico del programa
+

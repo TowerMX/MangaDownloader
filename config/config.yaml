@@ -2,7 +2,7 @@ language: es
 login: no
 delete_images: yes
 show_volumes: yes
-separate_chapters: yes
+separate_chapters: no
 volume_folders: no
 temp_path:
 save_path:

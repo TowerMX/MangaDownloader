@@ -1,12 +1,18 @@
-- name:
-  url:
-  first_chapter: first
-  last_chapter: last
+- name: Oyasumi Punpun
+  url: https://mangadex.org/chapter/149ae901-5920-4483-aef2-4d7faa951bab/1
+  first_chapter: 35
+  last_chapter: 67
   trim_first_pages: 0
   trim_last_pages: 0
-- name:
-  url:
+- name: JoJo's Bizarre Adventure Part 7 - Steel Ball Run (Official Colored)
+  url: https://mangadex.org/chapter/321d05f9-c4be-4941-8f26-6e559e49ea49
   first_chapter: first
-  last_chapter: last
+  last_chapter: 27
+  trim_first_pages: 0
+  trim_last_pages: 0
+- name: Oyasumi Punpun
+  url: https://mangadex.org/chapter/10a311a0-1b97-417e-a013-a84596a0d73d
+  first_chapter: first
+  last_chapter: 12
   trim_first_pages: 0
   trim_last_pages: 0
