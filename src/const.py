@@ -71,6 +71,13 @@ MANGA_IMAGE_CLASS = "img sp limit-width limit-height mx-auto"
 MANGA_IMAGE_XPATH = "/html/body/div[1]/div[1]/div[2]/div[2]/div/div[1]/div[2]/div[1]/div/img[not (@style=\"display: none;\")]"
 MANGA_IMAGE_CSS_SELECTOR = "img.img:nth-child(1)"
 
+MANHWA_IMAGES_DIV_CLASS = "mx-auto h-full w-full"
+MANHWA_IMAGES_DIV_XPATH = "/html/body/div[1]/div[1]/div[2]/div[2]/div/div[1]/div[2]/div[1]/div"
+MANHWA_IMAGES_DIV_CSS_SELECTOR = ".overflow-x-auto > div:nth-child(1)"
+MANHWA_IMAGE_CLASS = "img ls limit-width"
+MANHWA_IMAGE_XPATH = "/html/body/div[1]/div[1]/div[2]/div[2]/div/div[1]/div[2]/div[1]/div/div[X]/img"  # X must be replaced
+MANHWA_IMAGE_CSS_SELECTOR = "div.md--page:nth-child(X) > img:nth-child(1)"  # X must be replaced
+
 MANGA_TITLE_TITLE_XPATH = "/html/body/div[1]/div[1]/div[2]/div[2]/div/div[4]/p"
 MANGA_CHAPTER_TITLE_XPATH = "/html/body/div[1]/div[1]/div[2]/div[2]/div/div[1]/div[1]/div[1]/a"
 MANGA_SELECT_GROUP_XPATH = "/html/body/div[1]/div[12]/div[2]/div/div[1]"

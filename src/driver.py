@@ -150,12 +150,13 @@ class MyDriver:
             self._navigate(manga_url)
         elif url_check == "title":
             self.logger.warning("Esta es la URL de un manga, pero se debe introducir la URL de una página una vez dentro. El manga no se descargará.")
-            self._select_manga_group()
+            # self._select_manga_group()  # WIP
             return False
         else:
             self.logger.error("Error en la URL, el manga no se descargará.")
             return False
 
+        # Go to first chapter to download
         volume = None
         current_chapter = None
         status_updated = False
@@ -165,7 +166,6 @@ class MyDriver:
                 status_updated = True
             except (ValueError, IndexError, Exception):
                 self._wait(const.DEFAULT_RETRY_SLEEP_TIME)
-
         if volume == "Oneshot":
             pass
         elif isinstance(first_chapter, int) or isinstance(first_chapter, float):
@@ -202,19 +202,20 @@ class MyDriver:
             self.logger.error("Parámetro first_chapter de mangalist.yaml no reconocido.")
             return False
 
+        # Go to first page
         status_updated = False
         while not status_updated:
             try:
-                initial_page = int(self._get_page_status()[2])
+                current_page = int(self._get_page_status()[2])
                 status_updated = True
             except (ValueError, IndexError, Exception):
                 self._wait(const.DEFAULT_RETRY_SLEEP_TIME)
-        while initial_page > 1:
+        while current_page > 1:
             self._turn_page(direction="backward")
             status_updated = False
             while not status_updated:
                 try:
-                    initial_page = int(self._get_page_status()[2])
+                    current_page = int(self._get_page_status()[2])
                     status_updated = True
                 except (ValueError, IndexError, Exception):
                     self._wait(const.DEFAULT_RETRY_SLEEP_TIME)
@@ -243,24 +244,52 @@ class MyDriver:
                 self.logger.error("Error en la URL durante la descarga. Descarga del manga incompleta.")
                 return False
 
-            current_chapter, is_last_page = self._download_image(manga_name, trim_first_pages=trim_first_pages, trim_last_pages=trim_last_pages, temp_folder=temp_folder)
+            current_chapter, is_last_page, is_manhwa = self._download_image(manga_name, page_to_download=current_page,
+                                                                            trim_first_pages=trim_first_pages,
+                                                                            trim_last_pages=trim_last_pages,
+                                                                            temp_folder=temp_folder)
 
             if is_last_page:
-                self._turn_page(direction="forward", sleep_time=const.DEFAULT_CHAPTER_CHANGE_SLEEP_TIME)
                 current_chapter += 0.0001
+                current_page = 1
+                self._change_chapter(direction="forward")
+                status_updated = False
+                while not status_updated:
+                    try:
+                        new_chapter = float(self._get_page_status()[1])
+                        status_updated = True
+                    except (ValueError, IndexError, Exception):
+                        self._wait(const.DEFAULT_RETRY_SLEEP_TIME)
+                if new_chapter < current_chapter:
+                    if last_chapter != "last":
+                        current_chapter_split = str(round(current_chapter, 3)).split(".")
+                        if len(current_chapter_split) == 2 and current_chapter_split[1] == "0":
+                            parsed_current_chapter = current_chapter_split[0]
+                        else:
+                            parsed_current_chapter = str(round(current_chapter, 3))
+                        self.logger.warning(
+                            f"Se ha introducido un número de último capítulo ({last_chapter}) superior al último disponible ({parsed_current_chapter}). Se ha descargado hasta dicho capítulo."
+                        )
+                    break
             else:
-                self._turn_page(direction="forward")
+                current_page += 1
+                if not is_manhwa:
+                    self._turn_page(direction="forward")
 
         self.logger.info(f"Manga {manga_name} descargado correctamente.")
         return True
 
 
-    def _download_image(self, manga_name, trim_first_pages=0, trim_last_pages=0, temp_folder=const.DEFAULT_TEMP_FOLDER):
+    def _download_image(self, manga_name, page_to_download=None, trim_first_pages=0, trim_last_pages=0, temp_folder=const.DEFAULT_TEMP_FOLDER):
         status_updated = False
         while not status_updated:
             try:
-                volume, chapter, page, last_page = self._get_page_status()
-                image_element = self.driver.find_element(By.XPATH, const.MANGA_IMAGE_XPATH)
+                volume, chapter, page, last_page, is_manhwa = self._get_page_status()
+                if is_manhwa:
+                    page = page_to_download
+                    image_element = self.driver.find_element(By.XPATH, const.MANHWA_IMAGE_XPATH.replace("X", str(page)))
+                else:
+                    image_element = self.driver.find_element(By.XPATH, const.MANGA_IMAGE_XPATH)
                 status_updated = True
             except (NoSuchElementException, ValueError, IndexError, Exception):
                 self._wait(const.DEFAULT_RETRY_SLEEP_TIME)
@@ -312,9 +341,10 @@ class MyDriver:
         with open(image_path, "wb") as img:
             img.write(image_bytes)
 
-        return float(chapter), page==last_page
+        return float(chapter), page==last_page, is_manhwa
 
 
+    # WIP
     def _select_manga_group(self):
         title_url = self.driver.current_url
         secondary_browser = MyDriver(self.logger, headless=False, sandbox=False)
@@ -336,7 +366,6 @@ class MyDriver:
                 self._wait(const.DEFAULT_RETRY_SLEEP_TIME)
 
 
-
         while self.driver.current_url == title_url:
             self._wait(const.DEFAULT_RETRY_SLEEP_TIME)
         return self.driver.current_url
@@ -344,7 +373,7 @@ class MyDriver:
     def _get_page_status(self):
         chapter_element = self.driver.find_element(By.XPATH, const.MANGA_CHAPTER_XPATH)
         page_element = self.driver.find_element(By.XPATH, const.MANGA_PAGE_XPATH)
-        
+
         if chapter_element.text == "Oneshot":
             volume = "Oneshot"
             chapter = "1"
@@ -357,11 +386,18 @@ class MyDriver:
                 volume = chapter_split[0].split(" ")[1]
                 chapter = chapter_split[1].split(" ")[1]
 
-        page_split = page_element.text.split(" / ")
-        page = page_split[0].split(" ")[1]
-        last_page = page_split[1]
+        if page_element.text == "Menu":
+            is_manhwa = True
+            images = self.driver.find_elements(By.XPATH, f"{const.MANHWA_IMAGES_DIV_XPATH}/*")
+            page = 1
+            last_page = len(images)
+        else:
+            is_manhwa = False
+            page_split = page_element.text.split(" / ")
+            page = page_split[0].split(" ")[1]
+            last_page = page_split[1]
 
-        return volume, chapter, page, last_page
+        return volume, chapter, page, last_page, is_manhwa
 
 
     def get_file_content_chrome(self, uri):
