@@ -5,7 +5,7 @@ from selenium.common.exceptions import NoSuchElementException, NoSuchDriverExcep
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
-from webdriver_auto_update.webdriver_auto_update import WebdriverAutoUpdate
+from webdriver_auto_update.webdriver_manager import WebDriverManager
 from pathlib import Path
 import shutil
 import platform
@@ -18,9 +18,10 @@ from . import const
 class MyDriver:
     base_url = "https://mangadex.org/"
 
-    def __init__(self, logger, headless=True, sandbox=False):
+    def __init__(self, logger, headless=True, force_driver_update=False, sandbox=False):
         self.logger = logger
         self.headless = headless
+        self.force_driver_update = force_driver_update
         self.sandbox = sandbox
         if self.sandbox:
             self.logger.debug("Modo sandbox activado.")
@@ -57,6 +58,8 @@ class MyDriver:
             driver_folder_path = const.LINUX_FOLDER_PATH
 
         try:
+            if self.force_driver_update:
+                raise NoSuchDriverException
             service = Service(executable_path=driver_path)
             self.driver = webdriver.Chrome(service=service, options=chrome_options)
         except NoSuchDriverException:
@@ -64,7 +67,7 @@ class MyDriver:
             shutil.rmtree(driver_folder_path, ignore_errors=True)
             Path(const.DRIVER_BASE_FOLDER_PATH).mkdir(exist_ok=True)
             Path(driver_folder_path).mkdir(exist_ok=True)
-            WebdriverAutoUpdate(driver_folder_path).main()
+            WebDriverManager(driver_folder_path).main()
             for file in os.scandir(driver_folder_path):
                 if file.is_dir():
                     shutil.rmtree(rf"{driver_folder_path}\{file.name}", ignore_errors=True)
@@ -73,7 +76,7 @@ class MyDriver:
             self.driver = webdriver.Chrome(service=service, options=chrome_options)
         except SessionNotCreatedException:
             self.logger.debug("Actualizando el driver...")
-            WebdriverAutoUpdate(driver_folder_path).main()
+            WebDriverManager(driver_folder_path).main()
             for file in os.scandir(driver_folder_path):
                 if file.is_dir():
                     shutil.rmtree(rf"{driver_folder_path}\{file.name}", ignore_errors=True)

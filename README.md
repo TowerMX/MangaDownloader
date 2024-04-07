@@ -1,5 +1,5 @@
 # MangaDownloader
-### Ver. 1.1.0
+### Ver. 1.1.1
 
 Este es un proyecto para descargar mangas exclusivamente de mangadex.org en formato PDF.
 
@@ -100,6 +100,10 @@ Se pueden añadir tantos mangas como se quiera, poniendo un guión (-) al princi
 
 
 # Historial de versiones
+
+### Ver. 1.1.1
+
+- Parche para corregir la actualización del driver en las versiones recientes del paquete
 
 ### Ver. 1.1.0
 
